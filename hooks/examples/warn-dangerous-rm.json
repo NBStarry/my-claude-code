@@ -1,0 +1,17 @@
+{
+  "description": "Warn before executing dangerous rm commands (rm -rf /、rm -rf ~/ etc.)",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import sys,json; data=json.load(sys.stdin); cmd=data.get('input',{}).get('command',''); patterns=['rm -rf /','rm -rf ~','rm -rf $HOME']; result={'decision':'block','reason':'Dangerous rm command detected: '+cmd} if any(p in cmd for p in patterns) else {}; print(json.dumps(result))\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
