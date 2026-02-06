@@ -61,41 +61,89 @@ Claude Code 通过 stdin 向状态栏脚本传入 JSON 数据，包含模型信�
 
 ## notify-qq.sh
 
-通过 QQ 发送 Claude Code 通知消息，配合 hooks 实现远程提醒。
+通过 QQ 发送 Claude Code 格式化通知消息，配合 hooks 实现远程手机推送提醒。
+
+### Features / 功能
+
+- 从 hook stdin 读取 JSON，解析工具调用、用户请求等上下文
+- 三种通知类型，格式化显示：
+  - `permission_prompt` — 授权请求（含工具名、参数、授权选项）
+  - `idle_prompt` — 等待输入
+  - `stop` — 任务完成
+- 显示项目名、Claude 最后回复、用户最近请求
+- 通过 LLOneBot OneBot 11 HTTP API 发送 QQ 私聊消息
+
+### Preview / 效果预览
+
+```
+[任务完成] my-project
+━━━━━━━━━━━━━━━
+[回复] 已完成所有修改并推送到 dev 分支。
+━━━━━━━━━━━━━━━
+[上下文] 请帮我更新文档
+```
+
+```
+[需要授权] my-project
+
+Bash: npm install express
+
+━━━ 授权选项 ━━━
+❯ 1. Yes
+  2. Yes, don't ask again
+  3. No
+```
 
 ### Dependencies / 依赖
 
-- **LLOneBot** — NTQQ 插件，提供 OneBot 11 HTTP API
+- **LiteLoaderQQNT** — NTQQ 插件加载器
+- **LLOneBot v4.9.2** — LiteLoaderQQNT 插件，提供 OneBot 11 HTTP API
+- `jq` — JSON 解析
 - `curl` — HTTP 请求（macOS/Linux 自带）
+
+### Prerequisites / 前提条件
+
+1. 安装 LiteLoaderQQNT 到 macOS QQ（详见项目 wiki）
+2. 安装 LLOneBot 插件，HTTP API 默认端口 3000
+3. **桌面 QQ 登录机器人号**（发送方），**手机 QQ 登录主号**（接收方）
+4. 修改脚本中 `QQ_USER` 为接收通知的 QQ 号
+
+> **注意：** 必须使用两个不同的 QQ 号。同一账号给自己发消息不会触发手机推送。
 
 ### Installation / 安装
 
 ```bash
 cp notify-qq.sh ~/.claude/notify-qq.sh
 chmod +x ~/.claude/notify-qq.sh
+# 编辑 QQ_USER 为你的接收号
 ```
 
-在 `~/.zshrc` 中添加环境变量：
+### Hook Configuration / Hook 配置
 
-```bash
-export QQ_USER_ID="你的QQ号"
-export QQ_API_URL="http://localhost:3000"  # 可选，默认即可
-```
+在 `~/.claude/settings.json` 中配置：
 
-### Usage / 使用方式
-
-**手动测试：**
-
-```bash
-QQ_USER_ID=12345 bash ~/.claude/notify-qq.sh "测试消息"
-```
-
-**配合 hooks 使用：** 在 `~/.claude/settings.json` 的 hook 命令末尾追加：
-
-```bash
-bash ~/.claude/notify-qq.sh '任务已完成'
+```json
+{
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [{"type": "command", "command": "bash ~/.claude/notify-qq.sh permission_prompt"}]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [{"type": "command", "command": "bash ~/.claude/notify-qq.sh idle_prompt"}]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{"type": "command", "command": "bash ~/.claude/notify-qq.sh stop"}]
+      }
+    ]
+  }
+}
 ```
 
 ### How It Works / 工作原理
 
-脚本通过 `curl` 向 LLOneBot 的 OneBot 11 HTTP API 发送 `send_private_msg` 请求。消息前缀 `[Claude Code]` 便于在 QQ 中识别。未配置 `QQ_USER_ID` 时静默跳过，不影响其他通知。
+Claude Code 通过 hook 触发脚本，stdin 传入 JSON（含 `message`、`cwd`、`transcript_path`）。脚本从 transcript 文件中提取最近的工具调用信息和用户请求，格式化为可读的通知消息，通过 LLOneBot HTTP API 发送 QQ 私聊。

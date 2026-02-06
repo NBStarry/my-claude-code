@@ -72,17 +72,19 @@ chmod +x ~/.claude/statusline.sh
 
 Hooks 允许你在 Claude Code 的特定事件点执行自定义逻辑。
 
-### notification.json — macOS 自动通知
+### notification.json — QQ 推送通知
 
-当 Claude 完成任务、需要授权或等待输入时，自动发送 macOS 系统通知 + 提示音：
+当 Claude 完成任务、需要授权或等待输入时，通过 QQ 私聊发送格式化通知到手机：
 
-| 事件 | 提示音 | 通知 |
-|------|--------|------|
-| 权限请求 | Ping | "Claude 需要你的授权" |
-| 空闲等待 | Blow | "Claude 正在等待你的输入" |
-| 任务完成 | Glass | "任务已完成，请查看结果" |
+| 事件 | 通知格式 |
+|------|----------|
+| 权限请求 | `[需要授权] 项目名` + 工具详情 + 授权选项 |
+| 空闲等待 | `[等待输入] 项目名` + Claude 回复 + 上下文 |
+| 任务完成 | `[任务完成] 项目名` + Claude 回复 + 上下文 |
 
-**安装：** 将 `hooks/notification.json` 中的 hooks 内容合并到 `~/.claude/settings.json`。
+**前提条件：** LiteLoaderQQNT + LLOneBot + 双 QQ 号
+
+**安装：** 安装 `scripts/notify-qq.sh`，将 `hooks/notification.json` 中的 hooks 合并到 `~/.claude/settings.json`。
 
 详见 [hooks/README.md](hooks/README.md)。
 
