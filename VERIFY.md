@@ -32,6 +32,12 @@
   - 预期效果：弹出 macOS 对话框（非横幅），必须点击"好"才会消失，同时有提示音
   - 实际效果：（待验证）
 
+- [ ] **QQ 消息通知 (notify-qq.sh)** (date: 2026-02-06)
+  - 前提：安装 LLOneBot 并配置 HTTP API，在 ~/.zshrc 中 export QQ_USER_ID
+  - 验证方法：`QQ_USER_ID=你的QQ号 bash ~/.claude/notify-qq.sh "测试"`，确认 QQ 收到消息
+  - 预期效果：QQ 收到 "[Claude Code] 测试" 私聊消息
+  - 实际效果：（待验证）
+
 ---
 
 ## Verified / 已验证项目

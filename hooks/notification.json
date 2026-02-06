@@ -1,5 +1,5 @@
 {
-  "description": "macOS notification hooks - 任务完成、权限请求和空闲等待时弹出持久对话框 + 提示音",
+  "description": "macOS 持久对话框 + QQ 消息双通道通知",
   "hooks": {
     "Notification": [
       {
@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Ping.aiff & osascript -e 'display alert \"Claude Code\" message \"Claude 需要你的授权\"' &"
+            "command": "afplay /System/Library/Sounds/Ping.aiff & osascript -e 'display alert \"Claude Code\" message \"Claude 需要你的授权\"' & bash ~/.claude/notify-qq.sh '需要你的授权，请回到终端操作'"
           }
         ]
       },
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Blow.aiff & osascript -e 'display alert \"Claude Code\" message \"Claude 正在等待你的输入\"' &"
+            "command": "afplay /System/Library/Sounds/Blow.aiff & osascript -e 'display alert \"Claude Code\" message \"Claude 正在等待你的输入\"' & bash ~/.claude/notify-qq.sh '正在等待你的输入'"
           }
         ]
       }
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Glass.aiff & osascript -e 'display alert \"Claude Code\" message \"任务已完成，请查看结果\"' &"
+            "command": "afplay /System/Library/Sounds/Glass.aiff & osascript -e 'display alert \"Claude Code\" message \"任务已完成，请查看结果\"' & bash ~/.claude/notify-qq.sh '任务已完成，请查看结果'"
           }
         ]
       }
