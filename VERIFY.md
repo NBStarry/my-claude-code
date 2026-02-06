@@ -27,17 +27,19 @@
   - 实际效果：（验证后填写）
 -->
 
-- [ ] **QQ 消息桥接 (qq-bridge.sh)** (commit: 589da60, date: 2026-02-06)
-  - 前提：websocat 已安装，tmux 中运行 Claude Code，LLOneBot 在线
-  - 验证方法：手机 QQ 发送消息，检查是否注入到 Claude Code 终端
-  - 预期效果：发送 "1" → Claude Code 选择授权；发送文本 → 作为输入；`/status` → 返回状态
-  - 实际效果：（验证后填写）
+（当前无待验证项目）
 
 ---
 
 ## Verified / 已验证项目
 
 <!-- 已验证通过并合并到 main 的改动记录 -->
+
+- [x] **QQ 消息桥接 (qq-bridge.sh)** (commit: 6beec01+5198337, date: 2026-02-06)
+  - 前提：websocat 已安装，tmux 中运行 Claude Code，LLOneBot 在线
+  - 验证方法：手机 QQ 发送消息，检查是否注入到 Claude Code 终端
+  - 预期效果：发送 "1" → Claude Code 选择授权；发送文本 → 作为输入；`/status` → 返回状态
+  - 实际效果：`/status` 返回状态正常，文本消息成功注入终端
 
 - [x] **statusline.sh 自定义状态栏** (commit: 3ad032f, date: 2026-02-06)
   - 验证方法：重启 Claude Code，检查底部状态栏
