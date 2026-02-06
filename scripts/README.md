@@ -147,3 +147,87 @@ chmod +x ~/.claude/notify-qq.sh
 ### How It Works / 工作原理
 
 Claude Code 通过 hook 触发脚本，stdin 传入 JSON（含 `message`、`cwd`、`transcript_path`）。脚本从 transcript 文件中提取最近的工具调用信息和用户请求，格式化为可读的通知消息，通过 LLOneBot HTTP API 发送 QQ 私聊。
+
+---
+
+## qq-bridge.sh
+
+QQ → Claude Code 消息桥接守护进程。监听 QQ 私聊消息，通过 tmux send-keys 注入到 Claude Code 终端，与 notify-qq.sh 形成双向通信。
+
+### Features / 功能
+
+- 通过 WebSocket 实时接收 QQ 私聊消息
+- 自动检测 Claude Code 所在的 tmux pane
+- 支持授权选项快速回复（1/2/3）
+- 特殊命令：`/cancel`（Ctrl+C）、`/escape`、`/enter`、`/status`、`/help`
+- 转发成功后自动发送 QQ 确认回复
+- 守护进程管理（start/stop/status）
+- 断线自动重连（指数退避）
+
+### Preview / 效果预览
+
+```
+手机 QQ 发送: 1
+  → Claude Code 终端收到 "1" + Enter（选择授权）
+  → 手机收到确认: [已选择] 1. Yes
+
+手机 QQ 发送: 请帮我写单元测试
+  → Claude Code 终端收到 "请帮我写单元测试" + Enter
+  → 手机收到确认: [已发送] 请帮我写单元测试
+
+手机 QQ 发送: /cancel
+  → Claude Code 终端收到 Ctrl+C
+  → 手机收到确认: [已发送] Ctrl+C
+```
+
+### Dependencies / 依赖
+
+- `websocat` — CLI WebSocket 客户端
+- `jq` — JSON 解析工具
+- `tmux` — 终端复用器（Claude Code 需在 tmux 中运行）
+
+```bash
+# macOS
+brew install websocat jq tmux
+```
+
+### Installation / 安装
+
+```bash
+cp qq-bridge.sh ~/.claude/qq-bridge.sh
+chmod +x ~/.claude/qq-bridge.sh
+```
+
+修改脚本中 `QQ_USER` 为接收消息的 QQ 号（即你的主号）。
+
+### Usage / 使用方式
+
+```bash
+# 启动守护进程
+~/.claude/qq-bridge.sh start
+
+# 查看状态
+~/.claude/qq-bridge.sh status
+
+# 停止
+~/.claude/qq-bridge.sh stop
+
+# 前台运行（调试用）
+~/.claude/qq-bridge.sh run
+```
+
+### Special Commands / 特殊命令
+
+| 命令 | 动作 |
+|------|------|
+| `/cancel`, `/c` | 发送 Ctrl+C |
+| `/escape`, `/e` | 发送 Escape |
+| `/enter` | 发送空回车 |
+| `/status` | 查看桥接状态 |
+| `/help` | 显示命令列表 |
+
+### How It Works / 工作原理
+
+脚本通过 `websocat` 连接 LLOneBot 的 WebSocket 服务（`ws://127.0.0.1:3001`），实时接收 OneBot 11 事件。收到私聊消息后，过滤发送者 QQ 号，解析消息文本，通过 `tmux send-keys -l`（literal 模式）安全地注入到 Claude Code 所在的 tmux pane。注入成功后，通过 LLOneBot HTTP API 发送确认回复给手机端。
+
+> **注意：** 必须在 tmux 中运行 Claude Code，脚本通过 `pane_current_command` 自动检测包含 "claude" 的 pane。
