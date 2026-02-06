@@ -72,12 +72,17 @@ chmod +x ~/.claude/statusline.sh
 
 Hooks 允许你在 Claude Code 的特定事件点执行自定义逻辑。
 
-| 事件 | 触发时机 |
-|------|----------|
-| `PreToolUse` | 工具调用之前 |
-| `PostToolUse` | 工具调用之后 |
-| `Stop` | Claude 准备结束时 |
-| `UserPromptSubmit` | 用户提交提示词时 |
+### notification.json — macOS 自动通知
+
+当 Claude 完成任务、需要授权或等待输入时，自动发送 macOS 系统通知 + 提示音：
+
+| 事件 | 提示音 | 通知 |
+|------|--------|------|
+| 权限请求 | Ping | "Claude 需要你的授权" |
+| 空闲等待 | Blow | "Claude 正在等待你的输入" |
+| 任务完成 | Glass | "任务已完成，请查看结果" |
+
+**安装：** 将 `hooks/notification.json` 中的 hooks 内容合并到 `~/.claude/settings.json`。
 
 详见 [hooks/README.md](hooks/README.md)。
 
