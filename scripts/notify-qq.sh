@@ -62,22 +62,22 @@ if [ "$HOOK_TYPE" = "stop" ]; then
     NOTIFICATION_TEXT="[任务完成] ${PROJECT}"
 
     [ -n "$REPLY" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
-━━━━━━━━━━━━━━━
+
 [回复] ${REPLY}"
 
     [ -n "$CONTEXT" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
-━━━━━━━━━━━━━━━
+
 [上下文] ${CONTEXT}"
 
 elif [ "$HOOK_TYPE" = "idle_prompt" ]; then
     NOTIFICATION_TEXT="[等待输入] ${PROJECT}"
 
     [ -n "$REPLY" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
-━━━━━━━━━━━━━━━
+
 [回复] ${REPLY}"
 
     [ -n "$CONTEXT" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
-━━━━━━━━━━━━━━━
+
 [上下文] ${CONTEXT}"
 
 elif [ "$HOOK_TYPE" = "permission_prompt" ]; then
@@ -151,7 +151,7 @@ elif [ "$HOOK_TYPE" = "permission_prompt" ]; then
 ${TOOL_DETAILS}"
 
     [ -n "$CONTEXT" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
-━━━━━━━━━━━━━━━
+
 [上下文] ${CONTEXT}"
 
     NOTIFICATION_TEXT="${NOTIFICATION_TEXT}

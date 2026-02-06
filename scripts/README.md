@@ -77,9 +77,9 @@ Claude Code 通过 stdin 向状态栏脚本传入 JSON 数据，包含模型信�
 
 ```
 [任务完成] my-project
-━━━━━━━━━━━━━━━
+
 [回复] 已完成所有修改并推送到 dev 分支。
-━━━━━━━━━━━━━━━
+
 [上下文] 请帮我更新文档
 ```
 
@@ -88,7 +88,7 @@ Claude Code 通过 stdin 向状态栏脚本传入 JSON 数据，包含模型信�
 
 Bash: npm install express
 
-━━━ 授权选项 ━━━
+[授权选项]
 ❯ 1. Yes
   2. Yes, don't ask again
   3. No
