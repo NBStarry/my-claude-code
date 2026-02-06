@@ -2,25 +2,10 @@
 # Claude Code QQ Notification Script
 # 通过 LLOneBot (OneBot 11 HTTP API) 发送 QQ 私聊通知
 # 从 stdin 读取 Claude Code hook JSON 输入，解析工具调用详情
-#
-# 安装:
-#   cp notify-qq.sh ~/.claude/notify-qq.sh
-#   chmod +x ~/.claude/notify-qq.sh
-#
-# 前提条件:
-#   1. 安装 LiteLoaderQQNT + LLOneBot 插件
-#   2. LLOneBot 启用 HTTP API (默认端口 3000)
-#   3. 桌面 QQ 登录机器人号（发送方），手机登录主号（接收方）
-#   4. 修改下方 QQ_USER 为接收通知的 QQ 号
-#
-# 使用方式 (在 hooks 中配置):
-#   bash ~/.claude/notify-qq.sh permission_prompt
-#   bash ~/.claude/notify-qq.sh idle_prompt
-#   bash ~/.claude/notify-qq.sh stop
 
-# ─── 配置（请根据自己的情况修改） ───
+# 配置
 QQ_API="http://localhost:3000"
-QQ_USER="YOUR_QQ_NUMBER"  # 接收通知的 QQ 号
+QQ_USER="794426422"
 HOOK_TYPE="${1:-unknown}"  # permission_prompt / idle_prompt / stop
 
 # 日志
@@ -40,24 +25,60 @@ MESSAGE=$(echo "$INPUT" | jq -r '.message // ""' 2>/dev/null)
 CWD=$(echo "$INPUT" | jq -r '.cwd // ""' 2>/dev/null)
 TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // ""' 2>/dev/null)
 
-# 简化工作目录
-SHORT_CWD=$(echo "$CWD" | sed "s|${HOME}/||")
+# 提取项目名（CWD 最后一级目录）
+PROJECT=$(basename "$CWD" 2>/dev/null)
+
+# 提取最近的用户请求作为上下文（仅纯文本消息，跳过 tool_result）
+CONTEXT=""
+if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
+    CONTEXT=$(grep '"type":"user"' "$TRANSCRIPT_PATH" \
+        | jq -rs '[.[] | select(.message.content | type == "string") | .message.content] | last // empty' 2>/dev/null)
+    # 只取第一行，去掉粘贴的长内容
+    CONTEXT=$(echo "$CONTEXT" | head -1)
+    [ -n "$CONTEXT" ] && CONTEXT="${CONTEXT:0:200}"
+fi
+
+# 提取 Claude 最后的回复（仅文本部分）
+REPLY=""
+if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
+    REPLY=$(tail -r "$TRANSCRIPT_PATH" 2>/dev/null | while read -r line; do
+        TYPE=$(echo "$line" | jq -r '.type // ""' 2>/dev/null)
+        if [ "$TYPE" = "assistant" ]; then
+            TEXT=$(echo "$line" | jq -r '
+                [.message.content[]? | select(.type == "text") | .text] | join("\n")
+            ' 2>/dev/null)
+            if [ -n "$TEXT" ]; then
+                echo "$TEXT"
+                break
+            fi
+        fi
+    done)
+    [ -n "$REPLY" ] && REPLY="${REPLY:0:300}"
+fi
 
 # ─── 根据 hook 类型构建消息 ───
 
 if [ "$HOOK_TYPE" = "stop" ]; then
-    # Stop hook: 任务完成通知
-    NOTIFICATION_TEXT="✅ 任务已完成
+    NOTIFICATION_TEXT="[任务完成] ${PROJECT}"
 
-📁 工作目录: ${SHORT_CWD}
-⏰ 时间: $(date +'%H:%M:%S')"
+    [ -n "$REPLY" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
+━━━━━━━━━━━━━━━
+[回复] ${REPLY}"
+
+    [ -n "$CONTEXT" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
+━━━━━━━━━━━━━━━
+[上下文] ${CONTEXT}"
 
 elif [ "$HOOK_TYPE" = "idle_prompt" ]; then
-    # Idle hook: 等待输入
-    NOTIFICATION_TEXT="💬 Claude 正在等待你的输入
+    NOTIFICATION_TEXT="[等待输入] ${PROJECT}"
 
-📁 工作目录: ${SHORT_CWD}
-⏰ 时间: $(date +'%H:%M:%S')"
+    [ -n "$REPLY" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
+━━━━━━━━━━━━━━━
+[回复] ${REPLY}"
+
+    [ -n "$CONTEXT" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
+━━━━━━━━━━━━━━━
+[上下文] ${CONTEXT}"
 
 elif [ "$HOOK_TYPE" = "permission_prompt" ]; then
     # Permission hook: 授权请求，解析工具调用详情
@@ -67,7 +88,7 @@ elif [ "$HOOK_TYPE" = "permission_prompt" ]; then
 
     # 从 transcript 提取工具调用信息
     if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-        TOOL_INFO=$(tac "$TRANSCRIPT_PATH" 2>/dev/null | head -20 | while read -r line; do
+        TOOL_INFO=$(tail -r "$TRANSCRIPT_PATH" 2>/dev/null | head -20 | while read -r line; do
             TYPE=$(echo "$line" | jq -r '.type // ""' 2>/dev/null)
             if [ "$TYPE" = "assistant" ]; then
                 TOOL_CALL=$(echo "$line" | jq -r '
@@ -125,43 +146,24 @@ elif [ "$HOOK_TYPE" = "permission_prompt" ]; then
         TOOL_DETAILS="$MESSAGE"
     fi
 
-    # 提取用户请求
-    USER_MSG=""
-    if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-        USER_MSG=$(grep '"type":"user"' "$TRANSCRIPT_PATH" \
-            | grep -v "━━━" \
-            | grep -v "Claude Code" \
-            | tail -1 \
-            | jq -r '.message.content // empty' 2>/dev/null)
-        [ -n "$USER_MSG" ] && USER_MSG="${USER_MSG:0:300}"
-    fi
-
-    # 构建授权通知
-    NOTIFICATION_TEXT="🔐 需要授权
+    NOTIFICATION_TEXT="[需要授权] ${PROJECT}
 
 ${TOOL_DETAILS}"
 
-    [ -n "$USER_MSG" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
-
-📝 用户请求:
-${USER_MSG}"
+    [ -n "$CONTEXT" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
+━━━━━━━━━━━━━━━
+[上下文] ${CONTEXT}"
 
     NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
 
 ━━━ 授权选项 ━━━
 ❯ 1. Yes
-  2. Yes, don't ask again for ${SHORT_CWD}
-  3. No
-
-📁 工作目录: ${SHORT_CWD}
-⏰ 时间: $(date +'%H:%M:%S')"
+  2. Yes, don't ask again
+  3. No"
 
 else
-    # 未知类型，直接转发消息
-    NOTIFICATION_TEXT="[Claude Code] ${MESSAGE:-通知}
-
-📁 ${SHORT_CWD}
-⏰ $(date +'%H:%M:%S')"
+    NOTIFICATION_TEXT="[通知] ${PROJECT}
+${MESSAGE:-Claude Code 通知}"
 fi
 
 log "Sending: ${NOTIFICATION_TEXT:0:200}..."
