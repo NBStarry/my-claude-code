@@ -11,7 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Ping.aiff & osascript -e 'display notification \"Claude 需要你的授权\" with title \"Claude Code\"'"
+            "command": "afplay /System/Library/Sounds/Ping.aiff & osascript -e 'display alert \"Claude Code\" message \"Claude 需要你的授权\"' &"
           }
         ]
       },
@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Blow.aiff & osascript -e 'display notification \"Claude 正在等待你的输入\" with title \"Claude Code\"'"
+            "command": "afplay /System/Library/Sounds/Blow.aiff & osascript -e 'display alert \"Claude Code\" message \"Claude 正在等待你的输入\"' &"
           }
         ]
       }
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Glass.aiff & osascript -e 'display notification \"任务已完成，请查看结果\" with title \"Claude Code\"'"
+            "command": "afplay /System/Library/Sounds/Glass.aiff & osascript -e 'display alert \"Claude Code\" message \"任务已完成，请查看结果\"' &"
           }
         ]
       }
