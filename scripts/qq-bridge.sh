@@ -162,14 +162,19 @@ listen_loop() {
 
     log "Bridge started (PID $$)"
 
+    # 退出时清理子进程
+    trap 'kill $(jobs -p) 2>/dev/null' EXIT
+
     while true; do
         log "Connecting to ${QQ_WS}..."
         local got_message=0
 
+        # 注意：nohup 会将 stdin 重定向到 /dev/null，导致 websocat 的
+        # line mode 立即遇到 EOF 而报错。用 sleep 子进程维持 stdin 打开。
         while IFS= read -r line; do
             got_message=1
             handle_message "$line"
-        done < <(websocat -t "$QQ_WS" 2>/dev/null)
+        done < <(websocat -t "$QQ_WS" < <(sleep 2147483647) 2>/dev/null)
 
         # 收到过消息则重置退避
         [ "$got_message" -eq 1 ] && backoff=2
