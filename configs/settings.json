@@ -1,9 +1,4 @@
 {
-  "model": "opus",
-  "statusLine": {
-    "type": "command",
-    "command": "bash ~/.claude/statusline.sh"
-  },
   "hooks": {
     "Notification": [
       {
@@ -11,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Ping.aiff & osascript -e 'display alert \"Claude Code\" message \"Claude 需要你的授权\"' &"
+            "command": "bash ~/.claude/notify-qq.sh permission_prompt"
           }
         ]
       },
@@ -20,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Blow.aiff & osascript -e 'display alert \"Claude Code\" message \"Claude 正在等待你的输入\"' &"
+            "command": "bash ~/.claude/notify-qq.sh idle_prompt"
           }
         ]
       }
@@ -30,10 +25,14 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Glass.aiff & osascript -e 'display alert \"Claude Code\" message \"任务已完成，请查看结果\"' &"
+            "command": "bash ~/.claude/notify-qq.sh stop"
           }
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline.sh"
   }
 }

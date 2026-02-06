@@ -27,16 +27,7 @@
   - 实际效果：（验证后填写）
 -->
 
-- [ ] **通知改用 display alert 持久对话框** (date: 2026-02-06)
-  - 验证方法：重启 Claude Code，等待任务完成或权限请求触发通知
-  - 预期效果：弹出 macOS 对话框（非横幅），必须点击"好"才会消失，同时有提示音
-  - 实际效果：（待验证）
-
-- [ ] **QQ 消息通知 (notify-qq.sh)** (date: 2026-02-06)
-  - 前提：安装 LLOneBot 并配置 HTTP API，在 ~/.zshrc 中 export QQ_USER_ID
-  - 验证方法：`QQ_USER_ID=你的QQ号 bash ~/.claude/notify-qq.sh "测试"`，确认 QQ 收到消息
-  - 预期效果：QQ 收到 "[Claude Code] 测试" 私聊消息
-  - 实际效果：（待验证）
+（当前无待验证项目）
 
 ---
 
@@ -52,4 +43,17 @@
 - [x] **notification.json macOS 通知 hooks** (commit: 9db8d12, date: 2026-02-06)
   - 验证方法：重启 Claude Code，执行操作触发权限请求和任务完成
   - 预期效果：收到系统通知横幅 + 提示音
-  - 实际效果：（待用户确认后更新）
+  - 实际效果：已确认工作正常
+
+- [x] **QQ 消息通知 (notify-qq.sh)** (date: 2026-02-06)
+  - 前提：安装 LiteLoaderQQNT + LLOneBot，桌面 QQ 登录机器人号
+  - 验证方法：手机 QQ 收到来自机器人号的通知消息
+  - 预期效果：收到格式化的通知（含工具详情、授权选项、工作目录、时间）
+  - 实际效果：已确认手机推送正常
+
+---
+
+## Deprecated / 已废弃项目
+
+- [-] **通知改用 display alert 持久对话框** (date: 2026-02-06)
+  - 原因：改用 QQ 通知方案，macOS 系统通知不再需要
