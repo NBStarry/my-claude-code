@@ -28,6 +28,23 @@ TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // ""' 2>/dev/null)
 # 提取项目名（CWD 最后一级目录）
 PROJECT=$(basename "$CWD" 2>/dev/null)
 
+# 从 transcript 计算上下文使用百分比
+CTX_INFO=""
+if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
+    USAGE=$(tail -r "$TRANSCRIPT_PATH" 2>/dev/null | while read -r line; do
+        INPUT_TOKENS=$(echo "$line" | jq -r '.message.usage.input_tokens // empty' 2>/dev/null)
+        if [ -n "$INPUT_TOKENS" ] && [ "$INPUT_TOKENS" != "0" ]; then
+            CACHE_READ=$(echo "$line" | jq -r '.message.usage.cache_read_input_tokens // 0' 2>/dev/null)
+            echo "$((INPUT_TOKENS + CACHE_READ))"
+            break
+        fi
+    done)
+    if [ -n "$USAGE" ] && [ "$USAGE" -gt 0 ] 2>/dev/null; then
+        CTX_PCT=$((USAGE * 100 / 200000))
+        CTX_INFO=" [ctx:${CTX_PCT}%]"
+    fi
+fi
+
 # 提取最近的用户请求作为上下文（仅纯文本消息，跳过 tool_result）
 CONTEXT=""
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
@@ -59,7 +76,7 @@ fi
 # ─── 根据 hook 类型构建消息 ───
 
 if [ "$HOOK_TYPE" = "stop" ]; then
-    NOTIFICATION_TEXT="[任务完成] ${PROJECT}"
+    NOTIFICATION_TEXT="[任务完成] ${PROJECT}${CTX_INFO}"
 
     [ -n "$REPLY" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
 
@@ -70,7 +87,7 @@ if [ "$HOOK_TYPE" = "stop" ]; then
 [上下文] ${CONTEXT}"
 
 elif [ "$HOOK_TYPE" = "idle_prompt" ]; then
-    NOTIFICATION_TEXT="[等待输入] ${PROJECT}"
+    NOTIFICATION_TEXT="[等待输入] ${PROJECT}${CTX_INFO}"
 
     [ -n "$REPLY" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
 
@@ -146,7 +163,7 @@ elif [ "$HOOK_TYPE" = "permission_prompt" ]; then
         TOOL_DETAILS="$MESSAGE"
     fi
 
-    NOTIFICATION_TEXT="[需要授权] ${PROJECT}
+    NOTIFICATION_TEXT="[需要授权] ${PROJECT}${CTX_INFO}
 
 ${TOOL_DETAILS}"
 
@@ -162,7 +179,7 @@ ${TOOL_DETAILS}"
   3. No"
 
 else
-    NOTIFICATION_TEXT="[通知] ${PROJECT}
+    NOTIFICATION_TEXT="[通知] ${PROJECT}${CTX_INFO}
 ${MESSAGE:-Claude Code 通知}"
 fi
 

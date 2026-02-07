@@ -70,13 +70,13 @@ Claude Code 通过 stdin 向状态栏脚本传入 JSON 数据，包含模型信�
   - `permission_prompt` — 授权请求（含工具名、参数、授权选项）
   - `idle_prompt` — 等待输入
   - `stop` — 任务完成
-- 显示项目名、Claude 最后回复、用户最近请求
+- 显示项目名、上下文使用百分比、Claude 最后回复、用户最近请求
 - 通过 LLOneBot OneBot 11 HTTP API 发送 QQ 私聊消息
 
 ### Preview / 效果预览
 
 ```
-[任务完成] my-project
+[任务完成] my-project [ctx:34%]
 
 [回复] 已完成所有修改并推送到 dev 分支。
 
@@ -84,7 +84,7 @@ Claude Code 通过 stdin 向状态栏脚本传入 JSON 数据，包含模型信�
 ```
 
 ```
-[需要授权] my-project
+[需要授权] my-project [ctx:34%]
 
 Bash: npm install express
 
