@@ -159,22 +159,50 @@ handle_message() {
 # ─── WebSocket 监听主循环 ───
 listen_loop() {
     local backoff=2
+    local fifo="${HOME}/.claude/qq-bridge.fifo"
 
     log "Bridge started (PID $$)"
 
-    # 退出时清理子进程
-    trap 'kill $(jobs -p) 2>/dev/null' EXIT
+    trap 'rm -f "$fifo"; kill $(jobs -p) 2>/dev/null' EXIT
 
     while true; do
         log "Connecting to ${QQ_WS}..."
         local got_message=0
 
-        # 注意：nohup 会将 stdin 重定向到 /dev/null，导致 websocat 的
-        # line mode 立即遇到 EOF 而报错。用 sleep 子进程维持 stdin 打开。
+        # 用 FIFO 解耦 websocat 输出和读取，方便 watchdog 控制生命周期
+        rm -f "$fifo"
+        mkfifo "$fifo"
+
+        # stdin 用 sleep 维持打开（nohup 会将 stdin 重定向到 /dev/null）
+        websocat -t "$QQ_WS" < <(sleep 2147483647) > "$fifo" 2>/dev/null &
+        local ws_pid=$!
+
+        # Watchdog: 每 30 秒检查 TCP 连接状态，死连接则 kill websocat 触发重连
+        # LLOneBot 不响应 WebSocket ping，需要用 lsof 检查 TCP 状态
+        (while true; do
+            sleep 30
+            if ! kill -0 $ws_pid 2>/dev/null; then
+                break
+            fi
+            if ! lsof -p $ws_pid -a -i TCP 2>/dev/null | grep -q 'ESTABLISHED'; then
+                log "Dead connection detected, forcing reconnect"
+                kill $ws_pid 2>/dev/null
+                break
+            fi
+        done) &
+        local wd_pid=$!
+
+        # 从 FIFO 读取事件（websocat 退出时 write-end 关闭 → read 收到 EOF）
         while IFS= read -r line; do
             got_message=1
             handle_message "$line"
-        done < <(websocat -t "$QQ_WS" < <(sleep 2147483647) 2>/dev/null)
+        done < "$fifo"
+
+        # 清理
+        kill $wd_pid $ws_pid 2>/dev/null
+        wait $wd_pid 2>/dev/null
+        wait $ws_pid 2>/dev/null
+        rm -f "$fifo"
 
         # 收到过消息则重置退避
         [ "$got_message" -eq 1 ] && backoff=2
