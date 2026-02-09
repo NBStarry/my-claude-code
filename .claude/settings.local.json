@@ -12,7 +12,15 @@
       "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code commit -m \"$\\(cat <<''EOF''\ndocs: add Agent Teams model selection rules to global CLAUDE.md\n\nLead defaults to opus, teammates to sonnet, haiku prohibited.\nRules installed at ~/.claude/CLAUDE.md to apply globally.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(grep:*)",
       "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code status)",
-      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code commit -m \"$\\(cat <<''EOF''\nfeat: add Telegram notification and bridge scripts\n\nMigrate bidirectional communication from QQ/LLOneBot to Telegram Bot\nAPI. Long polling replaces WebSocket, eliminating websocat/FIFO/keeper\ndependencies. Existing QQ scripts preserved for other users.\n\nNew files:\n- scripts/notify-telegram.sh — outbound notifications via Bot API\n- scripts/telegram-bridge.sh — inbound bridge via getUpdates polling\n- configs/telegram.conf.example — shared config template\n- configs/settings.telegram.json — hook wiring for Telegram\n- hooks/notification.telegram.json — notification hook template\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code commit -m \"$\\(cat <<''EOF''\nfeat: add Telegram notification and bridge scripts\n\nMigrate bidirectional communication from QQ/LLOneBot to Telegram Bot\nAPI. Long polling replaces WebSocket, eliminating websocat/FIFO/keeper\ndependencies. Existing QQ scripts preserved for other users.\n\nNew files:\n- scripts/notify-telegram.sh — outbound notifications via Bot API\n- scripts/telegram-bridge.sh — inbound bridge via getUpdates polling\n- configs/telegram.conf.example — shared config template\n- configs/settings.telegram.json — hook wiring for Telegram\n- hooks/notification.telegram.json — notification hook template\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(curl:*)",
+      "Bash(~/.claude/telegram-bridge.sh:*)",
+      "Bash(source ~/.claude/telegram.conf)",
+      "Bash(/cancel, /c - 发送 Ctrl+C)",
+      "Bash(/escape, /e - 发送 Escape)",
+      "Bash(/help - 显示此帮助\" --arg chat_id \"$TELEGRAM_CHAT_ID\" ''{chat_id: $chat_id, text: $text}''\\)\")",
+      "Bash(~/.claude/qq-bridge.sh:*)",
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code commit -m \"$\\(cat <<''EOF''\nchore: update local permission allow list\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   },
   "outputStyle": "Explanatory",
