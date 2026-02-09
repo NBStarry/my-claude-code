@@ -242,6 +242,17 @@ else
 ${MESSAGE:-Claude Code 通知}"
 fi
 
+# 多终端时附加 /connect 切换提示
+CONNECT_HINT=""
+PANE_COUNT=$(tmux list-panes -a -F '#{pane_title}' 2>/dev/null | grep -ic 'claude' || echo 0)
+if [ "$PANE_COUNT" -gt 1 ]; then
+    CURRENT_SESSION=$(tmux list-panes -a -F '#{session_name} #{pane_current_path}' 2>/dev/null \
+        | grep "$CWD" | head -1 | awk '{print $1}')
+    [ -n "$CURRENT_SESSION" ] && CONNECT_HINT="
+/connect ${CURRENT_SESSION} 切换到此项目"
+fi
+[ -n "$CONNECT_HINT" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}${CONNECT_HINT}"
+
 log "Sending: ${NOTIFICATION_TEXT:0:200}..."
 
 # Telegram 消息限制 4096 字符，超长截断

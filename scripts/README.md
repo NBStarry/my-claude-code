@@ -162,9 +162,12 @@ Telegram → Claude Code 消息桥接守护进程。监听 Telegram 私聊消息
 ### Features / 功能
 
 - 通过长轮询（`getUpdates`）实时接收 Telegram 消息
-- 自动检测 Claude Code 所在的 tmux pane
+- **多终端支持**：自动检测所有 tmux session 中的 Claude Code 实例
+  - `/list` 列出所有终端，`/connect <session>` 切换目标
+  - 单终端时自动连接，多终端时提示选择
+  - 目标终端关闭时自动切换到剩余终端并通知
 - 支持授权选项快速回复（1/2/3）
-- 特殊命令：`/cancel`、`/escape`、`/enter`、`/status`、`/restart`、`/log`、`/pane`、`/help`
+- 特殊命令：`/list`、`/connect`、`/cancel`、`/escape`、`/enter`、`/status`、`/restart`、`/log`、`/pane`、`/help`
 - 转发成功后自动发送 Telegram 确认回复
 - 守护进程管理（start/stop/restart/status/ensure）
 - Claude Code 启动时自动启动（`UserPromptSubmit` hook + `ensure` 命令）
@@ -237,18 +240,26 @@ Bridge 也可通过 `UserPromptSubmit` hook 自动启动，每次用户提交 pr
 
 | 命令 | 动作 |
 |------|------|
+| `/list`, `/l` | 列出所有 Claude Code 终端，标记当前连接 |
+| `/connect <session>` | 切换到指定 tmux session 的终端 |
 | `/cancel`, `/c` | 发送 Ctrl+C |
 | `/escape`, `/e` | 发送 Escape |
 | `/enter` | 发送空回车 |
-| `/status` | 查看桥接状态（含 PID、终端 pane、Bot 连通性） |
+| `/status` | 查看桥接状态（含当前连接、终端数量、Bot 连通性） |
 | `/restart` | 远程重启 bridge 守护进程 |
 | `/log` | 查看最近 10 行日志 |
-| `/pane` | 截取 Claude Code 终端当前显示内容 |
+| `/pane` | 截取当前连接终端的显示内容 |
 | `/help` | 显示命令列表 |
 
 ### How It Works / 工作原理
 
-脚本通过 `curl` 长轮询调用 Telegram Bot API 的 `getUpdates` 方法（`timeout=30`），实时接收消息更新。收到私聊消息后，过滤 Chat ID，解析消息文本，通过 `tmux send-keys -l`（literal 模式）安全地注入到 Claude Code 所在的 tmux pane。注入成功后，通过 `sendMessage` API 发送确认回复。
+脚本通过 `curl` 长轮询调用 Telegram Bot API 的 `getUpdates` 方法（`timeout=30`），实时接收消息更新。收到私聊消息后，过滤 Chat ID，解析消息文本，通过 `tmux send-keys -l`（literal 模式）安全地注入到目标 tmux pane。注入成功后，通过 `sendMessage` API 发送确认回复。
+
+**多终端路由：**
+- `list_claude_panes` 通过 `tmux list-panes -a` 扫描所有 session，匹配 `pane_current_command` 含 "claude" 的 pane
+- `get_active_pane` 从状态文件 (`~/.claude/telegram-bridge.active-pane`) 读取用户选择，验证 pane 存活性
+- 单终端时自动连接；多终端时提示 `/connect`；目标终端失效时自动切换到剩余终端并发送通知
+- 通知脚本 (`notify-telegram.sh`) 检测多终端时在消息末尾追加 `/connect <session>` 提示
 
 **架构特点：**
 - HTTP 长轮询，无需 WebSocket 或 `websocat` 依赖

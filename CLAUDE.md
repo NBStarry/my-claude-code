@@ -13,7 +13,7 @@ A public repository for sharing Claude Code configurations, custom scripts, hook
 The most complex feature spans `scripts/` and `hooks/`:
 
 - **Outbound** (`scripts/notify-telegram.sh`): Hook-triggered script that sends formatted notifications via Telegram Bot API
-- **Inbound** (`scripts/telegram-bridge.sh`): Long-polling daemon that fetches Telegram messages and injects them into Claude Code's tmux pane via `tmux send-keys`
+- **Inbound** (`scripts/telegram-bridge.sh`): Long-polling daemon that fetches Telegram messages and injects them into Claude Code's tmux pane via `tmux send-keys`. Supports multi-pane routing — detects all Claude Code instances across tmux sessions, with `/list` and `/connect <session>` commands for switching
 - **Hook wiring** (`hooks/notification.telegram.json`): Connects `Notification` (permission_prompt, idle_prompt) and `Stop` events to `notify-telegram.sh`
 - **Config** (`configs/telegram.conf.example`): Shared configuration for bot token and chat ID
 

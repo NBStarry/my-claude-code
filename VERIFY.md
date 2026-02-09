@@ -27,6 +27,17 @@
   - 实际效果：（验证后填写）
 -->
 
+- [ ] **telegram-bridge.sh 多终端支持** (date: 2026-02-09)
+  - 验证方法：
+    1. 在两个 tmux session 中启动 Claude Code
+    2. 发送 /list，确认列出两个终端
+    3. 发送 /connect <session>，确认切换成功
+    4. 发送消息，确认注入到正确的终端
+    5. 关闭一个终端，确认自动切换 + 通知
+    6. 检查通知消息是否包含 /connect 提示
+  - 预期效果：session 名切换、自动失效检测、通知含切换提示
+  - 实际效果：（验证后填写）
+
 - [ ] **Telegram 双向通信系统** (date: 2026-02-09)
   - 验证方法：
     1. 配置 ~/.claude/telegram.conf（Bot Token + Chat ID）

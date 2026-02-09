@@ -26,6 +26,7 @@ TELEGRAM_API="https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}"
 PID_FILE="${HOME}/.claude/telegram-bridge.pid"
 LOG_FILE="${HOME}/.claude/telegram-bridge.log"
 OFFSET_FILE="${HOME}/.claude/telegram-bridge.offset"
+ACTIVE_PANE_FILE="${HOME}/.claude/telegram-bridge.active-pane"
 POLL_TIMEOUT=30
 MAX_LOG_LINES=500
 TELEGRAM_BRIDGE_SILENT="${TELEGRAM_BRIDGE_SILENT:-0}"
@@ -71,14 +72,6 @@ check_deps() {
     fi
 }
 
-# ─── 自动检测 Claude Code 的 tmux pane ───
-find_claude_pane() {
-    tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index} #{pane_current_command}' 2>/dev/null \
-        | grep -i 'claude' \
-        | head -1 \
-        | cut -d' ' -f1
-}
-
 # ─── 发送 Telegram 确认回复 ───
 send_telegram_reply() {
     [ "$TELEGRAM_BRIDGE_SILENT" = "1" ] && return
@@ -90,15 +83,123 @@ send_telegram_reply() {
         > /dev/null 2>&1 &
 }
 
+# ─── 列出所有 Claude Code 的 tmux pane ───
+# 通过 pane_title 检测（Claude Code 设置标题含 "Claude"）
+# 输出格式: pane_id path (每行一条)
+list_claude_panes() {
+    tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index}|#{pane_title}|#{pane_current_path}' 2>/dev/null \
+        | grep -i 'claude' \
+        | while IFS='|' read -r pane_id title path; do
+            echo "$pane_id $path"
+        done
+}
+
+# ─── 获取活跃 pane（核心路由） ───
+# 返回码: 0=成功(pane_id via stdout), 1=无pane, 2=需用户选择
+get_active_pane() {
+    # 1. 检查状态文件中保存的 pane
+    if [ -f "$ACTIVE_PANE_FILE" ]; then
+        local saved_pane
+        saved_pane=$(cat "$ACTIVE_PANE_FILE" 2>/dev/null)
+        if [ -n "$saved_pane" ] && list_claude_panes | grep -q "^${saved_pane} "; then
+            echo "$saved_pane"
+            return 0
+        fi
+        # pane 已失效 — 尝试自动切换
+        local old_session="${saved_pane%%:*}"
+        rm -f "$ACTIVE_PANE_FILE"
+        local panes
+        panes=$(list_claude_panes)
+        local count
+        count=$(echo "$panes" | grep -c '.' 2>/dev/null || echo 0)
+        if [ "$count" -ge 1 ]; then
+            local new_pane new_session new_path
+            new_pane=$(echo "$panes" | head -1 | awk '{print $1}')
+            new_session="${new_pane%%:*}"
+            new_path=$(echo "$panes" | head -1 | awk '{print $2}')
+            echo "$new_pane" > "$ACTIVE_PANE_FILE"
+            send_telegram_reply "[自动切换] ${old_session} 已断开
+当前连接: ${new_session} (${new_pane})
+工作目录: ${new_path}
+发送 /list 查看所有终端"
+            log "Auto-switched from ${old_session} to ${new_session} (${new_pane})"
+            echo "$new_pane"
+            return 0
+        fi
+        return 1
+    fi
+
+    # 2. 无状态文件 — 自动检测
+    local panes
+    panes=$(list_claude_panes)
+    local count
+    count=$(echo "$panes" | grep -c '.' 2>/dev/null || echo 0)
+
+    if [ "$count" -eq 0 ]; then
+        return 1
+    elif [ "$count" -eq 1 ]; then
+        local pane_id
+        pane_id=$(echo "$panes" | awk '{print $1}')
+        echo "$pane_id" > "$ACTIVE_PANE_FILE"
+        echo "$pane_id"
+        return 0
+    else
+        return 2
+    fi
+}
+
+# ─── 格式化 pane 列表消息 ───
+format_pane_list() {
+    local panes active_pane
+    panes=$(list_claude_panes)
+    active_pane=""
+    [ -f "$ACTIVE_PANE_FILE" ] && active_pane=$(cat "$ACTIVE_PANE_FILE" 2>/dev/null)
+
+    local count
+    count=$(echo "$panes" | grep -c '.' 2>/dev/null || echo 0)
+
+    if [ "$count" -eq 0 ]; then
+        echo "[会话列表] 未找到 Claude Code 终端"
+        return
+    fi
+
+    local msg="[会话列表] 找到 ${count} 个 Claude Code 终端
+"
+    while IFS= read -r line; do
+        local pane_id pane_path session_name dir_name marker
+        pane_id=$(echo "$line" | awk '{print $1}')
+        pane_path=$(echo "$line" | awk '{print $2}')
+        session_name="${pane_id%%:*}"
+        dir_name=$(basename "$pane_path" 2>/dev/null)
+        if [ "$pane_id" = "$active_pane" ]; then
+            marker="★"
+        else
+            marker=" "
+        fi
+        msg="${msg}
+${marker} ${session_name}  ${pane_id}  ${dir_name}"
+    done <<< "$panes"
+
+    msg="${msg}
+
+发送 /connect <session名> 切换目标"
+    echo "$msg"
+}
+
 # ─── 注入文本到 tmux ───
 inject_to_tmux() {
     local text="$1"
     local pane
-    pane=$(find_claude_pane)
+    pane=$(get_active_pane)
+    local ret=$?
 
-    if [ -z "$pane" ]; then
+    if [ $ret -eq 1 ]; then
         log "ERROR: No Claude Code pane found"
         send_telegram_reply "[错误] 未找到 Claude Code 终端"
+        return 1
+    elif [ $ret -eq 2 ]; then
+        log "Multiple panes found, user must select"
+        send_telegram_reply "$(format_pane_list)"
         return 1
     fi
 
@@ -107,46 +208,70 @@ inject_to_tmux() {
     log "Injected to ${pane}: ${text:0:100}"
 }
 
+# ─── 获取活跃 pane 并处理错误（用于特殊命令） ───
+# 成功时设置 _pane 变量，失败时发送错误消息并返回 1
+resolve_pane() {
+    _pane=$(get_active_pane)
+    local ret=$?
+    if [ $ret -eq 1 ]; then
+        send_telegram_reply "[错误] 未找到 Claude Code 终端"
+        return 1
+    elif [ $ret -eq 2 ]; then
+        send_telegram_reply "$(format_pane_list)"
+        return 1
+    fi
+    return 0
+}
+
 # ─── 处理特殊命令 ───
 handle_special() {
-    local pane
     case "$1" in
         /cancel|/c)
-            pane=$(find_claude_pane)
-            if [ -n "$pane" ]; then
-                tmux send-keys -t "$pane" C-c
-                send_telegram_reply "[已发送] Ctrl+C"
-            else
-                send_telegram_reply "[错误] 未找到 Claude Code 终端"
-            fi
+            resolve_pane || return 0
+            tmux send-keys -t "$_pane" C-c
+            send_telegram_reply "[已发送] Ctrl+C"
             return 0 ;;
         /escape|/e)
-            pane=$(find_claude_pane)
-            if [ -n "$pane" ]; then
-                tmux send-keys -t "$pane" Escape
-                send_telegram_reply "[已发送] Escape"
-            else
-                send_telegram_reply "[错误] 未找到 Claude Code 终端"
-            fi
+            resolve_pane || return 0
+            tmux send-keys -t "$_pane" Escape
+            send_telegram_reply "[已发送] Escape"
             return 0 ;;
         /enter)
-            pane=$(find_claude_pane)
-            if [ -n "$pane" ]; then
-                tmux send-keys -t "$pane" Enter
-                send_telegram_reply "[已发送] Enter"
+            resolve_pane || return 0
+            tmux send-keys -t "$_pane" Enter
+            send_telegram_reply "[已发送] Enter"
+            return 0 ;;
+        /list|/l)
+            send_telegram_reply "$(format_pane_list)"
+            return 0 ;;
+        /connect\ *|/connect)
+            local target_session="${1#/connect}"
+            target_session="${target_session# }"
+            if [ -z "$target_session" ]; then
+                send_telegram_reply "[用法] /connect <session名>
+发送 /list 查看可用终端"
+                return 0
+            fi
+            local match match_path
+            match=$(list_claude_panes | grep "^${target_session}:" | head -1 | awk '{print $1}')
+            if [ -n "$match" ]; then
+                match_path=$(list_claude_panes | grep "^${match} " | awk '{print $2}')
+                echo "$match" > "$ACTIVE_PANE_FILE"
+                send_telegram_reply "[已切换] 当前连接: ${target_session} (${match})
+工作目录: ${match_path}"
+                log "Switched to ${target_session} (${match})"
             else
-                send_telegram_reply "[错误] 未找到 Claude Code 终端"
+                send_telegram_reply "[错误] 未找到 session: ${target_session}
+发送 /list 查看可用终端"
             fi
             return 0 ;;
         /status)
-            pane=$(find_claude_pane)
             local bridge_status="未知"
             if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null; then
                 bridge_status="运行中 (PID $(cat "$PID_FILE"))"
             else
                 bridge_status="未运行"
             fi
-            # 通过 getMe API 检查 bot 连通性
             local bot_status="未知"
             local bot_info
             bot_info=$(curl -s --max-time 5 $CURL_PROXY_ARGS "${TELEGRAM_API}/getMe" 2>/dev/null)
@@ -157,18 +282,25 @@ handle_special() {
             else
                 bot_status="离线"
             fi
-            if [ -n "$pane" ]; then
-                send_telegram_reply "[状态] Bridge: ${bridge_status}
-Bot: ${bot_status}
-终端: ${pane}"
+            local active_pane active_session pane_count
+            active_pane=$(get_active_pane 2>/dev/null)
+            active_session="${active_pane%%:*}"
+            pane_count=$(list_claude_panes | grep -c '.' 2>/dev/null || echo 0)
+            local pane_info
+            if [ -n "$active_pane" ]; then
+                pane_info="当前连接: ${active_session} (${active_pane})"
             else
-                send_telegram_reply "[状态] Bridge: ${bridge_status}
-Bot: ${bot_status}
-终端: 未找到"
+                pane_info="当前连接: 无"
             fi
+            send_telegram_reply "[状态] Bridge: ${bridge_status}
+Bot: ${bot_status}
+${pane_info}
+终端数量: ${pane_count}"
             return 0 ;;
         /help)
             send_telegram_reply "[命令列表]
+/list, /l - 列出所有终端
+/connect <session> - 切换目标终端
 /cancel, /c - 发送 Ctrl+C
 /escape, /e - 发送 Escape
 /enter - 发送空回车
@@ -182,7 +314,6 @@ Bot: ${bot_status}
         /restart)
             send_telegram_reply "[重启中] Bridge 正在重启..."
             log "Restart requested via Telegram"
-            # 先回复再重启，给 curl 时间发送
             sleep 1
             exec "$0" run
             ;;
@@ -193,19 +324,14 @@ Bot: ${bot_status}
 ${recent}"
             return 0 ;;
         /pane)
-            pane=$(find_claude_pane)
-            if [ -n "$pane" ]; then
-                local content
-                content=$(tmux capture-pane -t "$pane" -p 2>/dev/null | tail -30)
-                if [ -n "$content" ]; then
-                    # Telegram 消息有长度限制，截取最后部分
-                    send_telegram_reply "[终端内容] ${pane}
+            resolve_pane || return 0
+            local content
+            content=$(tmux capture-pane -t "$_pane" -p 2>/dev/null | tail -30)
+            if [ -n "$content" ]; then
+                send_telegram_reply "[终端内容] ${_pane}
 ${content:0:3000}"
-                else
-                    send_telegram_reply "[终端内容] ${pane}: (空)"
-                fi
             else
-                send_telegram_reply "[错误] 未找到 Claude Code 终端"
+                send_telegram_reply "[终端内容] ${_pane}: (空)"
             fi
             return 0 ;;
     esac
@@ -386,14 +512,22 @@ cmd_restart() {
 cmd_status() {
     if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null; then
         echo "Bridge running (PID $(cat "$PID_FILE"))"
-        local pane
-        pane=$(find_claude_pane)
-        if [ -n "$pane" ]; then
-            echo "Claude Code pane: ${pane}"
-        else
-            echo "Claude Code pane: not found"
+        local panes pane_count active_pane
+        panes=$(list_claude_panes)
+        pane_count=$(echo "$panes" | grep -c '.' 2>/dev/null || echo 0)
+        echo "Claude Code panes: ${pane_count}"
+        if [ "$pane_count" -gt 0 ]; then
+            active_pane=""
+            [ -f "$ACTIVE_PANE_FILE" ] && active_pane=$(cat "$ACTIVE_PANE_FILE" 2>/dev/null)
+            while IFS= read -r line; do
+                local pid ppath session_name marker
+                pid=$(echo "$line" | awk '{print $1}')
+                ppath=$(echo "$line" | awk '{print $2}')
+                session_name="${pid%%:*}"
+                if [ "$pid" = "$active_pane" ]; then marker="★"; else marker=" "; fi
+                echo "  ${marker} ${session_name}  ${pid}  $(basename "$ppath" 2>/dev/null)"
+            done <<< "$panes"
         fi
-        # 通过 getMe API 检查 bot 连通性
         local bot_info
         bot_info=$(curl -s --max-time 5 $CURL_PROXY_ARGS "${TELEGRAM_API}/getMe" 2>/dev/null)
         if echo "$bot_info" | jq -e '.ok' >/dev/null 2>&1; then

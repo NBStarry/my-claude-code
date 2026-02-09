@@ -21,7 +21,13 @@
       "Bash(/help - 显示此帮助\" --arg chat_id \"$TELEGRAM_CHAT_ID\" ''{chat_id: $chat_id, text: $text}''\\)\")",
       "Bash(~/.claude/qq-bridge.sh:*)",
       "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code commit -m \"$\\(cat <<''EOF''\nchore: update local permission allow list\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code mv:*)"
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code mv:*)",
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code commit --amend --no-edit)",
+      "Bash(tmux list-sessions:*)",
+      "Bash(tmux new-session:*)",
+      "Bash(tmux send-keys:*)",
+      "Bash(tmux list-panes:*)",
+      "Bash(tmux display-message:*)"
     ]
   },
   "outputStyle": "Explanatory",
