@@ -130,6 +130,45 @@ Commands 是用户通过 `/command-name` 手动触发的斜杠命令。
 
 详见 [commands/README.md](commands/README.md)。
 
+## Remote Access / 远程访问
+
+通过 SSH + Tailscale + tmux 实现手机远程控制 Claude Code，配合 QQ 双向通信形成完整的移动工作流：
+
+| 方式 | 适用场景 |
+|------|----------|
+| **QQ 消息** | 快速回复授权（1/2/3）、发送简短指令 |
+| **SSH + tmux** | 完整终端界面，查看输出、复杂交互 |
+
+### 架构
+
+```
+手机
+├── QQ → qq-bridge.sh → tmux send-keys → Claude Code（轻量指令）
+├── SSH → tmux attach → Claude Code（完整终端）
+└── Tailscale（内网穿透，任何网络均可访问）
+```
+
+### 配置步骤
+
+1. **macOS 开启 SSH**：系统设置 → 通用 → 共享 → 远程登录
+2. **安装 Tailscale**：`brew install --cask tailscale`，登录账号
+3. **手机安装 Tailscale**：同一账号登录，获得 `100.x.x.x` 虚拟 IP
+4. **手机 SSH 客户端**（Termius / Blink Shell）连接 Mac 的 Tailscale IP
+5. **连接后**：`tmux attach -t <session>` 接管 Claude Code 会话
+
+### tmux 配置建议
+
+```bash
+# ~/.tmux.conf
+set -g mouse on  # 启用鼠标/触屏滚动
+```
+
+### 手机终端常见问题
+
+- **中文乱码**：确保 `LANG=en_US.UTF-8`（添加到 `~/.zprofile`）
+- **无法滚动**：Termius 可设置音量键翻页；或 `Ctrl+B [` 进入 tmux 复制模式
+- **Tailscale SSH 不可用**：GUI 版本（App Store/cask）是沙盒化的，不支持 `tailscale set --ssh`，需用标准 SSH
+
 ## Environment
 
 | 项目 | 详情 |
