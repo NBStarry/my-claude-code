@@ -50,7 +50,14 @@ check_deps() {
 
 # ─── 等待 LLOneBot 上线 ───
 wait_for_llonebot() {
+    local qq_launched=0
     while ! lsof -i :3001 -sTCP:LISTEN >/dev/null 2>&1; do
+        # QQ 未运行时尝试自动启动
+        if [ "$qq_launched" -eq 0 ] && ! pgrep -x QQ >/dev/null 2>&1; then
+            log "QQ not running, attempting to launch..."
+            open -a QQ 2>/dev/null
+            qq_launched=1
+        fi
         log "LLOneBot not available (port 3001), waiting 10s..."
         sleep 10
     done
@@ -231,6 +238,7 @@ cleanup() {
 # ─── WebSocket 监听主循环 ───
 listen_loop() {
     local backoff=2
+    local first_connect=1
 
     log "Bridge started (PID $$)"
 
@@ -272,7 +280,10 @@ listen_loop() {
         log "Connected successfully"
 
         # 首次连接或重连成功时通知 QQ
-        if [ "$backoff" -gt 2 ]; then
+        if [ "$first_connect" -eq 1 ]; then
+            send_qq_reply "[Bridge] 已启动"
+            first_connect=0
+        elif [ "$backoff" -gt 2 ]; then
             send_qq_reply "[Bridge] 已重新连接"
         fi
 
