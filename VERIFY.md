@@ -27,6 +27,14 @@
   - 实际效果：（验证后填写）
 -->
 
+- [ ] **notify-qq.sh Agent Team 来源显示** (commit: d873e5e, date: 2026-02-09)
+  - 验证方法：
+    1. Team 模式测试：检查通知第一行是否包含 agent 名称，格式 `[任务完成] 项目名 [ctx:XX%] (agent-name)`
+    2. 非 Team 模式测试：确保没有 agent 信息时通知格式保持不变
+    3. 所有 hook 类型测试：stop、idle_prompt、permission_prompt 都能正确显示 agent 名称
+  - 预期效果：Team 模式显示 agent 名称，非 team 模式向后兼容
+  - 实际效果：（验证后填写）
+
 - [ ] **qq-bridge.sh TCP 状态 watchdog** (commit: 882cb8e, date: 2026-02-07)
   - 验证方法：长时间运行后检查 bridge 是否自动重连（QQ 重启后仍能收发消息）
   - 预期效果：死连接在 30 秒内被检测并自动重连
