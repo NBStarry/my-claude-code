@@ -27,6 +27,11 @@
   - 实际效果：（验证后填写）
 -->
 
+- [ ] **CLAUDE.md 重写 + 启用 Agent Teams 配置** (date: 2026-02-09)
+  - 验证方法：新会话中确认 Claude Code 能正确读取 CLAUDE.md 中的架构说明和 Git 工作流规则；确认 Agent Teams 功能可用
+  - 预期效果：CLAUDE.md 提供有效的项目指导；settings.local.json 中 Agent Teams 配置生效
+  - 实际效果：（验证后填写）
+
 - [ ] **notify-qq.sh Agent Team 来源显示** (commit: 04771c7, date: 2026-02-09)
   - 验证方法：
     1. Team 模式测试：检查通知第一行是否包含 agent 名称，格式 `[任务完成] 项目名 [ctx:XX%] (agent-name)`
