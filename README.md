@@ -13,11 +13,12 @@
 ```
 my-claude-code/
 ├── configs/          # 配置文件（settings.json 等）
-├── scripts/          # 自定义脚本（statusline 等）
+├── scripts/          # 自定义脚本（statusline、Telegram 通知等）
 ├── hooks/            # Hook 配置与示例
 ├── skills/           # Skill 定义与示例
 ├── agents/           # Agent 定义与示例
 ├── commands/         # Slash command 定义与示例
+├── deprecated/       # 废案归档（QQ 通信方案等）
 ├── CLAUDE.md         # 本项目的 Claude Code 约定
 └── README.md         # 本文件
 ```
@@ -28,8 +29,7 @@ my-claude-code/
 
 | 文件 | 说明 |
 |------|------|
-| `configs/settings.json` | 全局配置示例（QQ 通知），包含模型选择和 statusline 设置 |
-| `configs/settings.telegram.json` | 全局配置示例（Telegram 通知），结构同 settings.json |
+| `configs/settings.json` | 全局配置示例（Telegram 通知），包含 hook 配置和 statusline 设置 |
 | `configs/settings.local.json` | 项目级配置示例，包含输出风格和权限设置 |
 
 ```bash
@@ -66,34 +66,6 @@ chmod +x ~/.claude/statusline.sh
 ```
 
 **依赖：** `jq`（`brew install jq` 或 `apt-get install jq`）
-
-### qq-bridge.sh
-
-QQ → Claude Code 消息桥接守护进程，与 `notify-qq.sh` 形成**双向通信**：
-
-- **出站**（notify-qq.sh）：Claude Code 事件 → QQ 通知到手机
-- **入站**（qq-bridge.sh）：手机 QQ 消息 → 注入 Claude Code 终端
-
-功能：
-- 监听 QQ 私聊消息，通过 `tmux send-keys` 注入到 Claude Code
-- 支持授权快速回复（1/2/3）和特殊命令（`/cancel`、`/status`、`/restart`、`/log`、`/pane` 等）
-- 转发后自动发送 QQ 确认回复
-- Claude Code 启动时自动启动（`UserPromptSubmit` hook）
-- 连接前检查 LLOneBot 可用性，无进程泄漏
-- 守护进程模式，断线自动重连 + 重连通知
-
-**安装：**
-
-```bash
-brew install websocat  # WebSocket 客户端
-cp scripts/qq-bridge.sh ~/.claude/qq-bridge.sh
-chmod +x ~/.claude/qq-bridge.sh
-~/.claude/qq-bridge.sh start  # 启动守护进程
-```
-
-**依赖：** `websocat`、`jq`、`tmux`
-
-详见 [scripts/README.md](scripts/README.md)。
 
 ### notify-telegram.sh
 
@@ -140,7 +112,7 @@ Telegram → Claude Code 消息桥接守护进程，与 `notify-telegram.sh` 形
 - 转发后自动发送 Telegram 确认回复
 - Claude Code 启动时自动启动（`UserPromptSubmit` hook）
 - 守护进程模式，断线自动重连 + 重连通知
-- 比 qq-bridge.sh 更简单：无需 websocat、FIFO、keeper 进程
+- 架构简洁：无需 websocat、FIFO、keeper 进程
 
 **安装：**
 
@@ -158,22 +130,6 @@ chmod +x ~/.claude/telegram-bridge.sh
 ## Hooks
 
 Hooks 允许你在 Claude Code 的特定事件点执行自定义逻辑。
-
-### notification.json — QQ 推送通知
-
-当 Claude 完成任务、需要授权或等待输入时，通过 QQ 私聊发送格式化通知到手机：
-
-| 事件 | 通知格式 |
-|------|----------|
-| 权限请求 | `[需要授权] 项目名 [ctx:XX%]` + 工具详情 + 授权选项 |
-| 空闲等待 | `[等待输入] 项目名 [ctx:XX%]` + Claude 回复 + 上下文 |
-| 任务完成 | `[任务完成] 项目名 [ctx:XX%]` + Claude 回复 + 上下文 |
-
-**前提条件：** LiteLoaderQQNT + LLOneBot + 双 QQ 号
-
-**安装：** 安装 `scripts/notify-qq.sh`，将 `hooks/notification.json` 中的 hooks 合并到 `~/.claude/settings.json`。
-
-详见 [hooks/README.md](hooks/README.md)。
 
 ### notification.telegram.json — Telegram 推送通知
 
@@ -248,15 +204,13 @@ Claude Code 实验性功能，支持多 agent 协同工作。已在本项目中�
 
 | 方式 | 适用场景 |
 |------|----------|
-| **QQ 消息** | 快速回复授权（1/2/3）、发送简短指令 |
-| **Telegram 消息** | 快速回复授权（1/2/3）、发送简短指令（国际版） |
+| **Telegram 消息** | 快速回复授权（1/2/3）、发送简短指令 |
 | **SSH + tmux** | 完整终端界面，查看输出、复杂交互 |
 
 ### 架构
 
 ```
 手机
-├── QQ → qq-bridge.sh → tmux send-keys → Claude Code（轻量指令）
 ├── Telegram → telegram-bridge.sh → tmux send-keys → Claude Code（轻量指令）
 ├── SSH → tmux attach → Claude Code（完整终端）
 └── Tailscale（内网穿透，任何网络均可访问）

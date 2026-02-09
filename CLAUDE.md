@@ -8,26 +8,16 @@ A public repository for sharing Claude Code configurations, custom scripts, hook
 
 ## Architecture
 
-### Bidirectional Communication System
+### Bidirectional Communication System (Telegram)
 
 The most complex feature spans `scripts/` and `hooks/`:
-
-#### QQ Variant (via LLOneBot)
-
-- **Outbound** (`scripts/notify-qq.sh`): Hook-triggered script that sends formatted notifications (permission requests, idle prompts, task completion) to phone via LLOneBot HTTP API
-- **Inbound** (`scripts/qq-bridge.sh`): WebSocket daemon that listens for QQ messages and injects them into Claude Code's tmux pane via `tmux send-keys`
-- **Hook wiring** (`hooks/notification.json`): Connects `Notification` (permission_prompt, idle_prompt) and `Stop` events to `notify-qq.sh`
-
-Both scripts share config constants (`QQ_USER`, `LLONEBOT_PORT`, `LLONEBOT_WS_PORT`) that must match.
-
-#### Telegram Variant (via Bot API)
 
 - **Outbound** (`scripts/notify-telegram.sh`): Hook-triggered script that sends formatted notifications via Telegram Bot API
 - **Inbound** (`scripts/telegram-bridge.sh`): Long-polling daemon that fetches Telegram messages and injects them into Claude Code's tmux pane via `tmux send-keys`
 - **Hook wiring** (`hooks/notification.telegram.json`): Connects `Notification` (permission_prompt, idle_prompt) and `Stop` events to `notify-telegram.sh`
 - **Config** (`configs/telegram.conf.example`): Shared configuration for bot token and chat ID
 
-Simpler than QQ variant: uses long-polling instead of WebSocket, no external service (websocat) or FIFO/keeper process dependencies.
+Both scripts load config from `~/.claude/telegram.conf`. QQ variant has been deprecated to `deprecated/`.
 
 ### Directory Structure Convention
 

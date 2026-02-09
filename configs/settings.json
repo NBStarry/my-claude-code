@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/notify-qq.sh permission_prompt"
+            "command": "bash ~/.claude/notify-telegram.sh permission_prompt"
           }
         ]
       },
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/notify-qq.sh idle_prompt"
+            "command": "bash ~/.claude/notify-telegram.sh idle_prompt"
           }
         ]
       }
@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/qq-bridge.sh ensure"
+            "command": "bash ~/.claude/telegram-bridge.sh ensure"
           }
         ]
       }
@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/notify-qq.sh stop"
+            "command": "bash ~/.claude/notify-telegram.sh stop"
           }
         ]
       }

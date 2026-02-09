@@ -47,35 +47,6 @@
   - 预期效果：CLAUDE.md 提供有效的项目指导；settings.local.json 中 Agent Teams 配置生效
   - 实际效果：（验证后填写）
 
-- [ ] **notify-qq.sh Agent Team 来源显示** (commit: 04771c7, date: 2026-02-09)
-  - 验证方法：
-    1. Team 模式测试：检查通知第一行是否包含 agent 名称，格式 `[任务完成] 项目名 [ctx:XX%] (agent-name)`
-    2. 非 Team 模式测试：确保没有 agent 信息时通知格式保持不变
-    3. 所有 hook 类型测试：stop、idle_prompt、permission_prompt 都能正确显示 agent 名称
-  - 预期效果：Team 模式显示 agent 名称，非 team 模式向后兼容
-  - 实际效果：（验证后填写）
-
-- [ ] **qq-bridge.sh TCP 状态 watchdog** (commit: 882cb8e, date: 2026-02-07)
-  - 验证方法：长时间运行后检查 bridge 是否自动重连（QQ 重启后仍能收发消息）
-  - 预期效果：死连接在 30 秒内被检测并自动重连
-  - 实际效果：（验证后填写）
-
-- [ ] **qq-bridge.sh v2 全面改进** (commit: 218d27b, date: 2026-02-09)
-  - 验证方法：
-    1. 启动 bridge，发送 `/status`、`/log`、`/pane` 验证新命令
-    2. 重启 Claude Code，检查 bridge 是否通过 hook 自动启动
-    3. 长时间运行后检查 `sleep 2147483647` 进程数（应始终为 1）
-    4. 关闭 QQ 后检查 bridge 不会疯狂重连（等待 LLOneBot 上线）
-  - 预期效果：无进程泄漏、自动启动、新命令正常、日志自动轮转
-  - 实际效果：（验证后填写）
-
-- [ ] **qq-bridge.sh 自动启动 QQ + 启动通知** (commit: 05ef7de, date: 2026-02-09)
-  - 验证方法：
-    1. 关闭 QQ，重启 bridge，检查 QQ 是否自动被打开
-    2. 发送 `/restart`，检查是否收到两条通知（重启中 + 已启动）
-  - 预期效果：QQ 自动启动、/restart 有完整通知
-  - 实际效果：（验证后填写）
-
 ---
 
 ## Verified / 已验证项目
@@ -130,3 +101,15 @@
 
 - [-] **通知改用 display alert 持久对话框** (date: 2026-02-06)
   - 原因：改用 QQ 通知方案，macOS 系统通知不再需要
+
+- [-] **notify-qq.sh Agent Team 来源显示** (commit: 04771c7, date: 2026-02-09)
+  - 原因：QQ 方案已废弃，已迁移到 deprecated/
+
+- [-] **qq-bridge.sh TCP 状态 watchdog** (commit: 882cb8e, date: 2026-02-07)
+  - 原因：QQ 方案已废弃，已迁移到 deprecated/
+
+- [-] **qq-bridge.sh v2 全面改进** (commit: 218d27b, date: 2026-02-09)
+  - 原因：QQ 方案已废弃，已迁移到 deprecated/
+
+- [-] **qq-bridge.sh 自动启动 QQ + 启动通知** (commit: 05ef7de, date: 2026-02-09)
+  - 原因：QQ 方案已废弃，已迁移到 deprecated/
