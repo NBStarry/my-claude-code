@@ -47,7 +47,7 @@ This is a public repository for sharing Claude Code configurations, scripts, and
 ### Rules / 规则
 
 1. **所有改动必须先提交到 `dev` 分支**，禁止直接向 `main` 提交未验证的改动
-2. 每次提交到 `dev` 后，在 `VERIFY.md` 中添加一条待验证记录
+2. 每次向 `dev` 提交前，必须先在 `VERIFY.md` 中添加对应的待验证记录，并包含在同一个 commit 中
 3. 用户亲自测试改动效果后，在 `VERIFY.md` 中勾选对应条目
 4. 只有 `VERIFY.md` 中相关条目全部标记为 `[x]` 后，才可将 `dev` 合并到 `main`
 5. 合并方式：`git checkout main && git merge dev`，然后推送
@@ -68,7 +68,7 @@ This is a public repository for sharing Claude Code configurations, scripts, and
 3. Update the directory's README.md if needed
 4. Update the root README.md if adding a new category
 5. Include usage instructions and any dependencies
-6. Add a verification entry in `VERIFY.md`
+6. Add a verification entry in `VERIFY.md`（必须包含在同一个 commit 中）
 7. Commit and push to `dev`
 8. Wait for user verification before merging to `main`
 
