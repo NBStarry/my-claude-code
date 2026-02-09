@@ -132,6 +132,39 @@ Commands 是用户通过 `/command-name` 手动触发的斜杠命令。
 
 详见 [commands/README.md](commands/README.md)。
 
+## Agent Teams / 团队协作
+
+Claude Code 实验性功能，支持多 agent 协同工作。已在本项目中实践验证。
+
+### 启用
+
+```json
+// ~/.claude/settings.json
+{
+  "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" }
+}
+
+// .claude/settings.local.json
+{
+  "teammateMode": "in-process"
+}
+```
+
+### 推荐配置
+
+| 参数 | 推荐值 | 原因 |
+|------|--------|------|
+| `mode` | `acceptEdits` | `default` 会导致 teammate 卡在权限审批 |
+| `model` | `sonnet` | haiku idle 后反复发冗长消息浪费 token |
+| `teammateMode` | `in-process` | tmux 分 pane 太挤，Shift+上/下切换更方便 |
+
+### 踩坑经验
+
+- **`mode: "default"` 会卡死** — 权限请求通过邮箱发送但 lead 收不到交互式提示，必须用 `acceptEdits`
+- **Teammate 可能崩溃** — 需要检查进程存活（`ps aux | grep 'claude.*team'`），重新生成
+- **明确 Git 规则** — 在 prompt 中写 "不要自行 commit"，否则 teammate 可能擅自提交
+- **邮箱路由** — 消息可能发到错误团队，调试看 `~/.claude/teams/{name}/inboxes/`
+
 ## Remote Access / 远程访问
 
 通过 SSH + Tailscale + tmux 实现手机远程控制 Claude Code，配合 QQ 双向通信形成完整的移动工作流：

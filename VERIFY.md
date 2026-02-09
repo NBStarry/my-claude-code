@@ -27,7 +27,7 @@
   - 实际效果：（验证后填写）
 -->
 
-- [ ] **notify-qq.sh Agent Team 来源显示** (commit: d873e5e, date: 2026-02-09)
+- [ ] **notify-qq.sh Agent Team 来源显示** (commit: 04771c7, date: 2026-02-09)
   - 验证方法：
     1. Team 模式测试：检查通知第一行是否包含 agent 名称，格式 `[任务完成] 项目名 [ctx:XX%] (agent-name)`
     2. 非 Team 模式测试：确保没有 agent 信息时通知格式保持不变
