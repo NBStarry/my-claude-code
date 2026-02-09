@@ -230,12 +230,32 @@ ${TOOL_DETAILS}"
 
 [上下文] ${CONTEXT}"
 
-    NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
+    # 从终端截取实际授权选项（动态，非硬编码）
+    PERM_OPTIONS=""
+    PERM_PANE=$(tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index}|#{pane_title}|#{pane_current_path}' 2>/dev/null \
+        | grep -i 'claude' | grep "|${CWD}$" | head -1 | cut -d'|' -f1)
+    if [ -n "$PERM_PANE" ]; then
+        # 只提取权限对话框范围内的选项（Do you want to proceed ~ Esc to cancel）
+        PERM_OPTIONS=$(tmux capture-pane -t "$PERM_PANE" -p 2>/dev/null \
+            | sed -n '/Do you want to proceed/,/Esc to cancel/p' \
+            | grep -E '^\s*(❯\s+)?[0-9]+\.' \
+            | sed 's/^\s*❯\s*/❯ /; s/^\s*/  /' \
+            | head -5)
+    fi
+    if [ -n "$PERM_OPTIONS" ]; then
+        NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
+
+━━━ 授权选项 ━━━
+${PERM_OPTIONS}"
+    else
+        # 回退：无法截取时使用默认选项
+        NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
 
 ━━━ 授权选项 ━━━
 ❯ 1. Yes
   2. Yes, don't ask again
   3. No"
+    fi
 
 else
     NOTIFICATION_TEXT="[通知] ${PROJECT}${CTX_INFO}${AGENT_INFO}

@@ -27,7 +27,14 @@
       "Bash(tmux new-session:*)",
       "Bash(tmux send-keys:*)",
       "Bash(tmux list-panes:*)",
-      "Bash(tmux display-message:*)"
+      "Bash(tmux display-message:*)",
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code commit:*)",
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code diff .claude/settings.local.json)",
+      "WebSearch",
+      "Bash(tmux capture-pane:*)",
+      "Bash(python3:*)",
+      "Bash(ruby -e:*)",
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code diff scripts/notify-telegram.sh)"
     ]
   },
   "outputStyle": "Explanatory",
