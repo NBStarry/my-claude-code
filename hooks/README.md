@@ -70,6 +70,26 @@ Hooks 允许你在 Claude Code 的特定事件点执行自定义逻辑，用于�
 | `idle_prompt` | Claude 空闲 60 秒以上 |
 | `elicitation_dialog` | MCP 工具需要输入 |
 
+## notification.telegram.json — Telegram 推送通知
+
+通过 Telegram Bot API 发送私聊消息，实现手机远程提醒，覆盖三个场景：
+
+| 事件 | 通知格式 |
+|------|----------|
+| 权限请求 (`permission_prompt`) | `[需要授权] 项目名` + 工具详情 + 授权选项 |
+| 空闲等待 (`idle_prompt`) | `[等待输入] 项目名` + Claude 回复 + 上下文 |
+| 任务完成 (`Stop`) | `[任务完成] 项目名` + Claude 回复 + 上下文 |
+
+**安装方式：** 将 `notification.telegram.json` 中的 `hooks` 内容合并到 `~/.claude/settings.json`，并安装 `scripts/notify-telegram.sh`。
+
+**前提条件：** Telegram Bot（通过 @BotFather 创建，详见 [scripts/README.md](../scripts/README.md)）
+
+**优势：**
+- 官方 API，无封号风险
+- 无需本地运行第三方服务（如 LLOneBot）
+- 支持代理配置，适合网络受限环境
+- 跨平台（Windows/macOS/Linux）
+
 ## Examples / 示例
 
-参见 `examples/` 目录和 `notification.json`。
+参见 `examples/` 目录、`notification.json` 和 `notification.telegram.json`。

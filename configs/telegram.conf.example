@@ -1,0 +1,21 @@
+#!/bin/bash
+# Telegram Bot 配置文件
+# 复制到 ~/.claude/telegram.conf 并填写实际值
+#
+# ─── 创建 Bot ───
+# 1. 在 Telegram 中搜索 @BotFather 并发送 /newbot
+# 2. 按照提示设置 bot 名称和 username
+# 3. BotFather 返回的 HTTP API token 填入 TELEGRAM_BOT_TOKEN
+#
+# ─── 获取 Chat ID ───
+# 1. 向你创建的 bot 发送任意消息
+# 2. 在浏览器打开: https://api.telegram.org/bot<TOKEN>/getUpdates
+# 3. 找到 result[0].message.chat.id，填入 TELEGRAM_CHAT_ID
+# 4. 个人聊天 chat_id 为正整数，群组为负整数
+
+TELEGRAM_BOT_TOKEN="YOUR_BOT_TOKEN_HERE"
+TELEGRAM_CHAT_ID="YOUR_CHAT_ID_HERE"
+
+# 代理设置（可选，取消注释并修改地址）
+# 支持 socks5 和 http 代理
+# TELEGRAM_PROXY="socks5://127.0.0.1:7890"

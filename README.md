@@ -28,7 +28,8 @@ my-claude-code/
 
 | 文件 | 说明 |
 |------|------|
-| `configs/settings.json` | 全局配置示例，包含模型选择和 statusline 设置 |
+| `configs/settings.json` | 全局配置示例（QQ 通知），包含模型选择和 statusline 设置 |
+| `configs/settings.telegram.json` | 全局配置示例（Telegram 通知），结构同 settings.json |
 | `configs/settings.local.json` | 项目级配置示例，包含输出风格和权限设置 |
 
 ```bash
@@ -94,6 +95,66 @@ chmod +x ~/.claude/qq-bridge.sh
 
 详见 [scripts/README.md](scripts/README.md)。
 
+### notify-telegram.sh
+
+通过 Telegram Bot API 发送 Claude Code 格式化通知消息，配合 hooks 实现远程手机推送提醒。
+
+功能：
+- 三种通知类型（权限请求、等待输入、任务完成）
+- 显示项目名、上下文使用百分比、Claude 最后回复
+- 通过官方 Telegram Bot API 发送消息（无需第三方服务）
+- 支持代理配置（HTTPS_PROXY 或 TELEGRAM_PROXY）
+
+**效果预览：**
+
+```
+[任务完成] my-project [ctx:34%]
+
+[回复] 已完成所有修改并推送到 dev 分支。
+
+[上下文] 请帮我更新文档
+```
+
+**安装：**
+
+```bash
+cp scripts/notify-telegram.sh ~/.claude/notify-telegram.sh
+chmod +x ~/.claude/notify-telegram.sh
+# 配置 ~/.claude/telegram.conf（参考 configs/telegram.conf.example）
+```
+
+**依赖：** `jq`、`curl`
+
+详见 [scripts/README.md](scripts/README.md)。
+
+### telegram-bridge.sh
+
+Telegram → Claude Code 消息桥接守护进程，与 `notify-telegram.sh` 形成**双向通信**：
+
+- **出站**（notify-telegram.sh）：Claude Code 事件 → Telegram 通知到手机
+- **入站**（telegram-bridge.sh）：手机 Telegram 消息 → 注入 Claude Code 终端
+
+功能：
+- 长轮询接收 Telegram 消息，通过 `tmux send-keys` 注入到 Claude Code
+- 支持授权快速回复（1/2/3）和特殊命令（`/cancel`、`/status`、`/restart`、`/log`、`/pane` 等）
+- 转发后自动发送 Telegram 确认回复
+- Claude Code 启动时自动启动（`UserPromptSubmit` hook）
+- 守护进程模式，断线自动重连 + 重连通知
+- 比 qq-bridge.sh 更简单：无需 websocat、FIFO、keeper 进程
+
+**安装：**
+
+```bash
+cp scripts/telegram-bridge.sh ~/.claude/telegram-bridge.sh
+chmod +x ~/.claude/telegram-bridge.sh
+# 配置 ~/.claude/telegram.conf
+~/.claude/telegram-bridge.sh start  # 启动守护进程
+```
+
+**依赖：** `jq`、`tmux`、`curl`
+
+详见 [scripts/README.md](scripts/README.md)。
+
 ## Hooks
 
 Hooks 允许你在 Claude Code 的特定事件点执行自定义逻辑。
@@ -111,6 +172,22 @@ Hooks 允许你在 Claude Code 的特定事件点执行自定义逻辑。
 **前提条件：** LiteLoaderQQNT + LLOneBot + 双 QQ 号
 
 **安装：** 安装 `scripts/notify-qq.sh`，将 `hooks/notification.json` 中的 hooks 合并到 `~/.claude/settings.json`。
+
+详见 [hooks/README.md](hooks/README.md)。
+
+### notification.telegram.json — Telegram 推送通知
+
+当 Claude 完成任务、需要授权或等待输入时，通过 Telegram Bot API 发送格式化通知到手机：
+
+| 事件 | 通知格式 |
+|------|----------|
+| 权限请求 | `[需要授权] 项目名 [ctx:XX%]` + 工具详情 + 授权选项 |
+| 空闲等待 | `[等待输入] 项目名 [ctx:XX%]` + Claude 回复 + 上下文 |
+| 任务完成 | `[任务完成] 项目名 [ctx:XX%]` + Claude 回复 + 上下文 |
+
+**前提条件：** Telegram Bot（通过 @BotFather 创建）
+
+**安装：** 安装 `scripts/notify-telegram.sh`，将 `hooks/notification.telegram.json` 中的 hooks 合并到 `~/.claude/settings.json`。
 
 详见 [hooks/README.md](hooks/README.md)。
 
@@ -172,6 +249,7 @@ Claude Code 实验性功能，支持多 agent 协同工作。已在本项目中�
 | 方式 | 适用场景 |
 |------|----------|
 | **QQ 消息** | 快速回复授权（1/2/3）、发送简短指令 |
+| **Telegram 消息** | 快速回复授权（1/2/3）、发送简短指令（国际版） |
 | **SSH + tmux** | 完整终端界面，查看输出、复杂交互 |
 
 ### 架构
@@ -179,6 +257,7 @@ Claude Code 实验性功能，支持多 agent 协同工作。已在本项目中�
 ```
 手机
 ├── QQ → qq-bridge.sh → tmux send-keys → Claude Code（轻量指令）
+├── Telegram → telegram-bridge.sh → tmux send-keys → Claude Code（轻量指令）
 ├── SSH → tmux attach → Claude Code（完整终端）
 └── Tailscale（内网穿透，任何网络均可访问）
 ```

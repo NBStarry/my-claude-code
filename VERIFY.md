@@ -27,6 +27,16 @@
   - 实际效果：（验证后填写）
 -->
 
+- [ ] **Telegram 双向通信系统** (date: 2026-02-09)
+  - 验证方法：
+    1. 配置 ~/.claude/telegram.conf（Bot Token + Chat ID）
+    2. 触发 stop/idle_prompt/permission_prompt hook，检查 Telegram 收到格式化通知
+    3. 启动 telegram-bridge.sh，从 Telegram 发送消息/命令验证桥接注入
+    4. 测试特殊命令：/status、/cancel、/pane、/help
+    5. 重启 Claude Code，检查 bridge 是否通过 UserPromptSubmit hook 自动启动
+  - 预期效果：功能与 QQ 方案完全对等，长轮询稳定，无需 websocat/LLOneBot
+  - 实际效果：（验证后填写）
+
 - [ ] **configs/CLAUDE.md 添加 Agent Teams 模型规则** (date: 2026-02-09)
   - 验证方法：新会话中创建 Agent Team，确认 Lead 使用 Opus、Teammate 默认使用 Sonnet、不使用 Haiku
   - 预期效果：Team 创建时自动遵循模型选择规则

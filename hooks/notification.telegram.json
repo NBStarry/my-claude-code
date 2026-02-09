@@ -1,0 +1,35 @@
+{
+  "description": "Telegram 消息通知 — 通过 Telegram Bot API 发送格式化通知到手机",
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/notify-telegram.sh permission_prompt"
+          }
+        ]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/notify-telegram.sh idle_prompt"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/notify-telegram.sh stop"
+          }
+        ]
+      }
+    ]
+  }
+}
