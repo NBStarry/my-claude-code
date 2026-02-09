@@ -27,6 +27,11 @@
   - 实际效果：（验证后填写）
 -->
 
+- [ ] **configs/CLAUDE.md 添加 Agent Teams 模型规则** (date: 2026-02-09)
+  - 验证方法：新会话中创建 Agent Team，确认 Lead 使用 Opus、Teammate 默认使用 Sonnet、不使用 Haiku
+  - 预期效果：Team 创建时自动遵循模型选择规则
+  - 实际效果：（验证后填写）
+
 - [ ] **CLAUDE.md 重写 + 启用 Agent Teams 配置** (date: 2026-02-09)
   - 验证方法：新会话中确认 Claude Code 能正确读取 CLAUDE.md 中的架构说明和 Git 工作流规则；确认 Agent Teams 功能可用
   - 预期效果：CLAUDE.md 提供有效的项目指导；settings.local.json 中 Agent Teams 配置生效

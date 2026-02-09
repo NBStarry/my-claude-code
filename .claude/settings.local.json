@@ -2,12 +2,16 @@
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
-  "outputStyle": "Explanatory",
-  "teammateMode": "in-process",
   "permissions": {
     "allow": [
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code diff)",
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code log --oneline -3)",
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code add:*)",
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code commit -m \"$\\(cat <<''EOF''\ndocs: add Agent Teams model selection rules to global CLAUDE.md\n\nLead defaults to opus, teammates to sonnet, haiku prohibited.\nRules installed at ~/.claude/CLAUDE.md to apply globally.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
-  }
+  },
+  "outputStyle": "Explanatory",
+  "teammateMode": "in-process"
 }
