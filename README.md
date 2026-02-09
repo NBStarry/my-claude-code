@@ -75,9 +75,11 @@ QQ → Claude Code 消息桥接守护进程，与 `notify-qq.sh` 形成**双向�
 
 功能：
 - 监听 QQ 私聊消息，通过 `tmux send-keys` 注入到 Claude Code
-- 支持授权快速回复（1/2/3）和特殊命令（`/cancel`、`/status` 等）
+- 支持授权快速回复（1/2/3）和特殊命令（`/cancel`、`/status`、`/restart`、`/log`、`/pane` 等）
 - 转发后自动发送 QQ 确认回复
-- 守护进程模式，断线自动重连
+- Claude Code 启动时自动启动（`UserPromptSubmit` hook）
+- 连接前检查 LLOneBot 可用性，无进程泄漏
+- 守护进程模式，断线自动重连 + 重连通知
 
 **安装：**
 

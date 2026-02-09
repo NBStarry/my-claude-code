@@ -159,10 +159,14 @@ QQ → Claude Code 消息桥接守护进程。监听 QQ 私聊消息，通过 tm
 - 通过 WebSocket 实时接收 QQ 私聊消息
 - 自动检测 Claude Code 所在的 tmux pane
 - 支持授权选项快速回复（1/2/3）
-- 特殊命令：`/cancel`（Ctrl+C）、`/escape`、`/enter`、`/status`、`/help`
+- 特殊命令：`/cancel`、`/escape`、`/enter`、`/status`、`/restart`、`/log`、`/pane`、`/help`
 - 转发成功后自动发送 QQ 确认回复
-- 守护进程管理（start/stop/status）
-- 断线自动重连（指数退避）
+- 守护进程管理（start/stop/restart/status/ensure）
+- Claude Code 启动时自动启动（`UserPromptSubmit` hook + `ensure` 命令）
+- 连接前检查 LLOneBot 可用性（避免盲目重连）
+- 断线自动重连（指数退避）+ 重连成功通知
+- 日志自动轮转（超过 500 行截断）
+- 无进程泄漏：FIFO + tracked keeper 架构
 
 ### Preview / 效果预览
 
@@ -209,12 +213,20 @@ chmod +x ~/.claude/qq-bridge.sh
 # 查看状态
 ~/.claude/qq-bridge.sh status
 
+# 重启
+~/.claude/qq-bridge.sh restart
+
 # 停止
 ~/.claude/qq-bridge.sh stop
+
+# 幂等启动（已运行则跳过，用于 hook 集成）
+~/.claude/qq-bridge.sh ensure
 
 # 前台运行（调试用）
 ~/.claude/qq-bridge.sh run
 ```
+
+Bridge 也可通过 `UserPromptSubmit` hook 自动启动，每次用户提交 prompt 时检查 bridge 是否运行。
 
 ### Special Commands / 特殊命令
 
@@ -223,11 +235,20 @@ chmod +x ~/.claude/qq-bridge.sh
 | `/cancel`, `/c` | 发送 Ctrl+C |
 | `/escape`, `/e` | 发送 Escape |
 | `/enter` | 发送空回车 |
-| `/status` | 查看桥接状态 |
+| `/status` | 查看桥接状态（含 PID、终端 pane） |
+| `/restart` | 远程重启 bridge 守护进程 |
+| `/log` | 查看最近 10 行日志 |
+| `/pane` | 截取 Claude Code 终端当前显示内容 |
 | `/help` | 显示命令列表 |
 
 ### How It Works / 工作原理
 
 脚本通过 `websocat` 连接 LLOneBot 的 WebSocket 服务（`ws://127.0.0.1:3001`），实时接收 OneBot 11 事件。收到私聊消息后，过滤发送者 QQ 号，解析消息文本，通过 `tmux send-keys -l`（literal 模式）安全地注入到 Claude Code 所在的 tmux pane。注入成功后，通过 LLOneBot HTTP API 发送确认回复给手机端。
+
+**架构改进（v2）：**
+- 使用 FIFO + tracked keeper 进程替代不可追踪的 `<(sleep 2147483647)` 进程替换，彻底消除进程泄漏
+- 连接前通过 `lsof` 检查 LLOneBot 端口 3001 是否在监听，避免 QQ 下线时的无效重连
+- TCP 状态 watchdog 每 30 秒检查连接存活，LLOneBot 不响应 WebSocket ping，改用 `lsof` 检测 ESTABLISHED 状态
+- `ensure` 命令为幂等启动，配合 `UserPromptSubmit` hook 实现 Claude Code 启动时自动启动 bridge
 
 > **注意：** 必须在 tmux 中运行 Claude Code，脚本通过 `pane_current_command` 自动检测包含 "claude" 的 pane。

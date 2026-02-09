@@ -42,6 +42,15 @@
   - 预期效果：包含 SSH + Tailscale + tmux 配置步骤、架构图、常见问题
   - 实际效果：（验证后填写）
 
+- [ ] **qq-bridge.sh v2 全面改进** (commit: 9af4d16, date: 2026-02-09)
+  - 验证方法：
+    1. 启动 bridge，发送 `/status`、`/log`、`/pane` 验证新命令
+    2. 重启 Claude Code，检查 bridge 是否通过 hook 自动启动
+    3. 长时间运行后检查 `sleep 2147483647` 进程数（应始终为 1）
+    4. 关闭 QQ 后检查 bridge 不会疯狂重连（等待 LLOneBot 上线）
+  - 预期效果：无进程泄漏、自动启动、新命令正常、日志自动轮转
+  - 实际效果：（验证后填写）
+
 ---
 
 ## Verified / 已验证项目

@@ -20,6 +20,16 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/qq-bridge.sh ensure"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
