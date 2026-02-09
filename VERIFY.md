@@ -27,19 +27,9 @@
   - 实际效果：（验证后填写）
 -->
 
-- [ ] **QQ 通知显示上下文百分比 (notify-qq.sh)** (commit: a90cd82, date: 2026-02-07)
-  - 验证方法：等待 hook 触发，检查 QQ 通知第一行是否包含 `[ctx:XX%]`
-  - 预期效果：`[任务完成] my-project [ctx:34%]`
-  - 实际效果：（验证后填写）
-
 - [ ] **qq-bridge.sh TCP 状态 watchdog** (commit: 882cb8e, date: 2026-02-07)
   - 验证方法：长时间运行后检查 bridge 是否自动重连（QQ 重启后仍能收发消息）
   - 预期效果：死连接在 30 秒内被检测并自动重连
-  - 实际效果：（验证后填写）
-
-- [ ] **远程访问文档 (README.md)** (commit: e5deddc, date: 2026-02-09)
-  - 验证方法：检查 README.md 中 Remote Access 章节内容是否准确
-  - 预期效果：包含 SSH + Tailscale + tmux 配置步骤、架构图、常见问题
   - 实际效果：（验证后填写）
 
 ---
@@ -79,6 +69,16 @@
   - 验证方法：在任意项目中确认 Claude Code 遵守 commit 规则
   - 预期效果：代码与相关文档始终在同一 commit 中提交
   - 实际效果：已确认生效
+
+- [x] **QQ 通知显示上下文百分比 (notify-qq.sh)** (commit: a90cd82, date: 2026-02-07)
+  - 验证方法：等待 hook 触发，检查 QQ 通知第一行是否包含 `[ctx:XX%]`
+  - 预期效果：`[任务完成] my-project [ctx:34%]`
+  - 实际效果：上下文百分比显示正常，符合预期
+
+- [x] **远程访问文档 (README.md)** (commit: e5deddc, date: 2026-02-09)
+  - 验证方法：检查 README.md 中 Remote Access 章节内容是否准确
+  - 预期效果：包含 SSH + Tailscale + tmux 配置步骤、架构图、常见问题
+  - 实际效果：文档内容准确，符合预期
 
 ---
 
