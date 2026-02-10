@@ -27,7 +27,14 @@
   - 实际效果：（验证后填写）
 -->
 
-<!-- 当前无待验证项目 -->
+- [ ] **Insights 优化事项落实：CLAUDE.md 规则 + merge-verified skill + bash-syntax-check hook** (commit: 1fb8a3c, date: 2026-02-10)
+  - 验证方法：
+    1. 新会话中确认 Claude 遵守 approach-first workflow（非简单任务先提方案）
+    2. 确认编辑文件前会先 Read（不假设内容）
+    3. 运行 `/merge-verified`，确认按流程检查 VERIFY.md → bash -n → 合并摘要
+    4. 修改 .sh 文件后尝试 commit，确认 bash-syntax-check hook 提醒先做语法检查
+  - 预期效果：所有新规则生效，skill 和 hook 正常触发
+  - 实际效果：（验证后填写）
 
 ---
 

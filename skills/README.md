@@ -37,6 +37,7 @@ skills/
 │   └── plugin-settings/      # 插件配置
 ├── claude-md-management/     # CLAUDE.md 管理 (Anthropic)
 │   └── claude-md-improver/   # CLAUDE.md 审计与优化
+├── merge-verified/           # 安全合并工作流 (本仓库自定义)
 └── examples/                 # 模板
     └── example-skill/        # Skill 模板
 ```
@@ -289,6 +290,30 @@ Superpowers 是一套经过实战验证的开发方法论，将软件工程最�
 - `quality-criteria.md` — 质量评估标准
 - `templates.md` — CLAUDE.md 模板
 - `update-guidelines.md` — 更新指南
+
+---
+
+## Merge Verified — 安全合并工作流
+
+> 来源：本仓库自定义 | 版本：1.0.0
+
+### merge-verified
+
+**触发时机：** 所有 VERIFY.md 项目验证通过，准备将 dev 合并到 main
+
+**工作流：**
+1. 检查 VERIFY.md，确认所有条目为 `[x]`
+2. 对所有改动的 `.sh` 文件执行 `bash -n` 语法检查
+3. 展示合并摘要，等待用户确认
+4. 执行合并（stash → checkout main → merge → checkout dev → pop stash）
+5. 验证合并结果
+
+**核心理念：** 多重检查门控防止未验证代码进入稳定分支。任何一步失败立即停止。
+
+**最佳实践：**
+- 不要跳过 VERIFY.md 检查——哪怕只有一项未完成
+- 合并后不自动 push，留给用户手动确认
+- 配合 `bash-syntax-check` hook 使用效果更佳
 
 ---
 

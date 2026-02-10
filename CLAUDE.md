@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A public repository for sharing Claude Code configurations, custom scripts, hooks, skills, agents, and commands. Documentation is written in Chinese with English section headers. No build system or tests — this is a configuration/documentation repo.
 
+**Tech stack**: Shell (bash scripts), Markdown, JSON, HTML/CSS/JavaScript. Primary deployment target is GitHub Pages. All `.sh` files must pass `bash -n` syntax check before committing.
+
 ## Architecture
 
 ### Bidirectional Communication System (Telegram)
@@ -40,7 +42,10 @@ Each content directory follows the same pattern:
 
 Contains global Claude Code instructions meant to be installed at `~/.claude/CLAUDE.md`. Currently enforces:
 - Code changes and related documentation updates must be in the same commit
-- Agent Teams model selection: Lead uses Opus, teammates default to Sonnet (Opus for complex tasks), never use Haiku
+- Edit files only after fresh Read — never assume content
+- Shell scripts: test runtime behavior, use `bash -n` before commit, incremental regex testing
+- Approach-first workflow: propose approach before executing non-trivial fixes
+- Agent Teams: Lead uses Opus, teammates default to Sonnet, verify files on disk, checkpoint summaries
 
 ## Git Branching Workflow
 
@@ -71,3 +76,28 @@ Contains global Claude Code instructions meant to be installed at `~/.claude/CLA
 - Naming: `kebab-case` for all files (`.sh`, `.json`, `.md`)
 - Markdown with YAML frontmatter for skills, agents, commands
 - Configuration examples use placeholder values where credentials would appear
+
+## Editing Rules
+
+- Before editing any file, always re-read its current content with a fresh `Read` — never assume content from memory or previous reads
+- For multi-section edits, re-read between edits if the file structure may have shifted
+
+## Shell Scripts & Debugging
+
+- When fixing shell scripts, always test the actual runtime behavior with a real invocation — do not rely solely on reading the code
+- For tmux-related operations: remember `capture-pane -S -` for full scrollback, `-t` for pane targeting
+- When extracting data from process command lines (e.g., agent names via `ps`/`sed`/`awk`), build and test the regex incrementally in a Bash one-liner before embedding it in the script
+- All `.sh` files must pass `bash -n` syntax check before committing
+
+## Approach-First Workflow
+
+- For shell script fixes, regex extraction, and any non-trivial implementation: propose the approach in 3-5 bullet points (including specific commands/flags) before executing
+- Do not jump directly into implementation for debugging tasks — identify root cause first, then propose fix
+
+## Agent Teams / Multi-Agent Workflow
+
+- Always verify file existence on disk (not just in memory) before claiming a file exists or was created
+- Never merge to `main` without explicit VERIFY.md confirmation — all items must be `[x]`
+- Confirm teammate permissions and routing before assigning tasks
+- Break complex multi-agent setups into smaller validated steps — do not launch all roles simultaneously
+- After completing each major step, provide a checkpoint summary: (1) what was done, (2) files changed and status, (3) what's next
