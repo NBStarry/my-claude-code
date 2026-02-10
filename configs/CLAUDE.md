@@ -1,4 +1,5 @@
 # Global Rules
+<!-- Install: cp configs/CLAUDE.md ~/.claude/CLAUDE.md -->
 
 ## Git Commit Rules
 - Code changes and related documentation updates must be in the same commit — never split them into separate commits
