@@ -27,16 +27,33 @@
   - 实际效果：（验证后填写）
 -->
 
-- [ ] **qq-bridge.sh TCP 状态 watchdog** (commit: 882cb8e, date: 2026-02-07)
-  - 验证方法：长时间运行后检查 bridge 是否自动重连（QQ 重启后仍能收发消息）
-  - 预期效果：死连接在 30 秒内被检测并自动重连
-  - 实际效果：（验证后填写）
+<!-- 当前无待验证项目 -->
 
 ---
 
 ## Verified / 已验证项目
 
 <!-- 已验证通过并合并到 main 的改动记录 -->
+
+- [x] **Telegram 通知完整内容 + /full + 权限选项修复** (commit: aadafba, date: 2026-02-10)
+  - 验证方法：/full 获取完整代码修改、权限选项 2 导航、/pane 完整滚动历史
+  - 实际效果：全部功能正常
+
+- [x] **telegram-bridge.sh 多终端支持** (commit: 42bfb6a, date: 2026-02-09)
+  - 验证方法：/list 列出终端、/connect 切换、自动失效检测
+  - 实际效果：session 切换和自动检测正常
+
+- [x] **Telegram 双向通信系统** (commit: 4c8ce1d, date: 2026-02-09)
+  - 验证方法：Telegram 收发通知、bridge 消息注入、特殊命令
+  - 实际效果：长轮询稳定，功能完整
+
+- [x] **configs/CLAUDE.md 添加 Agent Teams 模型规则** (commit: c98b850, date: 2026-02-09)
+  - 验证方法：Agent Team 创建时遵循模型选择规则
+  - 实际效果：验证通过
+
+- [x] **CLAUDE.md 重写 + 启用 Agent Teams 配置** (commit: 17ed37f, date: 2026-02-09)
+  - 验证方法：Claude Code 正确读取架构说明和 Git 工作流规则
+  - 实际效果：验证通过
 
 - [x] **QQ 消息桥接 (qq-bridge.sh)** (commit: 6beec01+5198337, date: 2026-02-06)
   - 前提：websocat 已安装，tmux 中运行 Claude Code，LLOneBot 在线
@@ -86,3 +103,15 @@
 
 - [-] **通知改用 display alert 持久对话框** (date: 2026-02-06)
   - 原因：改用 QQ 通知方案，macOS 系统通知不再需要
+
+- [-] **notify-qq.sh Agent Team 来源显示** (commit: 04771c7, date: 2026-02-09)
+  - 原因：QQ 方案已废弃，已迁移到 deprecated/
+
+- [-] **qq-bridge.sh TCP 状态 watchdog** (commit: 882cb8e, date: 2026-02-07)
+  - 原因：QQ 方案已废弃，已迁移到 deprecated/
+
+- [-] **qq-bridge.sh v2 全面改进** (commit: 218d27b, date: 2026-02-09)
+  - 原因：QQ 方案已废弃，已迁移到 deprecated/
+
+- [-] **qq-bridge.sh 自动启动 QQ + 启动通知** (commit: 05ef7de, date: 2026-02-09)
+  - 原因：QQ 方案已废弃，已迁移到 deprecated/

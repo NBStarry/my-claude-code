@@ -14,6 +14,33 @@ log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
 }
 
+# 从父进程链提取 agent 名称（team 模式）
+get_agent_name() {
+    local pid=$PPID
+    local depth=0
+    # 向上遍历进程链，最多 10 层
+    while [ -n "$pid" ] && [ "$pid" -ne 1 ] && [ "$depth" -lt 10 ]; do
+        local cmdline=$(ps -p "$pid" -o command= 2>/dev/null)
+        # 检查是否包含 --agent-name 参数
+        if echo "$cmdline" | grep -q -- '--agent-name'; then
+            # 提取 agent 名称
+            echo "$cmdline" | awk '{
+                for (i=1; i<=NF; i++) {
+                    if ($i == "--agent-name" && i < NF) {
+                        print $(i+1)
+                        exit
+                    }
+                }
+            }'
+            return 0
+        fi
+        # 获取父进程 PID
+        pid=$(ps -p "$pid" -o ppid= 2>/dev/null | tr -d ' ')
+        depth=$((depth + 1))
+    done
+    return 1
+}
+
 log "Hook triggered: ${HOOK_TYPE}"
 
 # 读取 stdin JSON
@@ -27,6 +54,13 @@ TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // ""' 2>/dev/null)
 
 # 提取项目名（CWD 最后一级目录）
 PROJECT=$(basename "$CWD" 2>/dev/null)
+
+# 检测 agent 名称（team 模式）
+AGENT_NAME=$(get_agent_name)
+AGENT_INFO=""
+if [ -n "$AGENT_NAME" ]; then
+    AGENT_INFO=" (${AGENT_NAME})"
+fi
 
 # 从 transcript 计算上下文使用百分比
 CTX_INFO=""
@@ -76,7 +110,7 @@ fi
 # ─── 根据 hook 类型构建消息 ───
 
 if [ "$HOOK_TYPE" = "stop" ]; then
-    NOTIFICATION_TEXT="[任务完成] ${PROJECT}${CTX_INFO}"
+    NOTIFICATION_TEXT="[任务完成] ${PROJECT}${CTX_INFO}${AGENT_INFO}"
 
     [ -n "$REPLY" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
 
@@ -87,7 +121,7 @@ if [ "$HOOK_TYPE" = "stop" ]; then
 [上下文] ${CONTEXT}"
 
 elif [ "$HOOK_TYPE" = "idle_prompt" ]; then
-    NOTIFICATION_TEXT="[等待输入] ${PROJECT}${CTX_INFO}"
+    NOTIFICATION_TEXT="[等待输入] ${PROJECT}${CTX_INFO}${AGENT_INFO}"
 
     [ -n "$REPLY" ] && NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
 
@@ -163,7 +197,7 @@ elif [ "$HOOK_TYPE" = "permission_prompt" ]; then
         TOOL_DETAILS="$MESSAGE"
     fi
 
-    NOTIFICATION_TEXT="[需要授权] ${PROJECT}${CTX_INFO}
+    NOTIFICATION_TEXT="[需要授权] ${PROJECT}${CTX_INFO}${AGENT_INFO}
 
 ${TOOL_DETAILS}"
 
@@ -179,7 +213,7 @@ ${TOOL_DETAILS}"
   3. No"
 
 else
-    NOTIFICATION_TEXT="[通知] ${PROJECT}${CTX_INFO}
+    NOTIFICATION_TEXT="[通知] ${PROJECT}${CTX_INFO}${AGENT_INFO}
 ${MESSAGE:-Claude Code 通知}"
 fi
 

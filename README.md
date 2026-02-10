@@ -13,11 +13,12 @@
 ```
 my-claude-code/
 ├── configs/          # 配置文件（settings.json 等）
-├── scripts/          # 自定义脚本（statusline 等）
+├── scripts/          # 自定义脚本（statusline、Telegram 通知等）
 ├── hooks/            # Hook 配置与示例
 ├── skills/           # Skill 定义与示例
 ├── agents/           # Agent 定义与示例
 ├── commands/         # Slash command 定义与示例
+├── deprecated/       # 废案归档（QQ 通信方案等）
 ├── CLAUDE.md         # 本项目的 Claude Code 约定
 └── README.md         # 本文件
 ```
@@ -28,7 +29,7 @@ my-claude-code/
 
 | 文件 | 说明 |
 |------|------|
-| `configs/settings.json` | 全局配置示例，包含模型选择和 statusline 设置 |
+| `configs/settings.json` | 全局配置示例（Telegram 通知），包含 hook 配置和 statusline 设置 |
 | `configs/settings.local.json` | 项目级配置示例，包含输出风格和权限设置 |
 
 ```bash
@@ -66,29 +67,64 @@ chmod +x ~/.claude/statusline.sh
 
 **依赖：** `jq`（`brew install jq` 或 `apt-get install jq`）
 
-### qq-bridge.sh
+### notify-telegram.sh
 
-QQ → Claude Code 消息桥接守护进程，与 `notify-qq.sh` 形成**双向通信**：
-
-- **出站**（notify-qq.sh）：Claude Code 事件 → QQ 通知到手机
-- **入站**（qq-bridge.sh）：手机 QQ 消息 → 注入 Claude Code 终端
+通过 Telegram Bot API 发送 Claude Code 格式化通知消息，配合 hooks 实现远程手机推送提醒。
 
 功能：
-- 监听 QQ 私聊消息，通过 `tmux send-keys` 注入到 Claude Code
-- 支持授权快速回复（1/2/3）和特殊命令（`/cancel`、`/status` 等）
-- 转发后自动发送 QQ 确认回复
-- 守护进程模式，断线自动重连
+- 三种通知类型（权限请求、等待输入、任务完成）
+- 显示项目名、上下文使用百分比、Claude 最后回复
+- 通过官方 Telegram Bot API 发送消息（无需第三方服务）
+- 支持代理配置（HTTPS_PROXY 或 TELEGRAM_PROXY）
+
+**效果预览：**
+
+```
+[任务完成] my-project [ctx:34%]
+
+[回复] 已完成所有修改并推送到 dev 分支。
+
+[上下文] 请帮我更新文档
+```
 
 **安装：**
 
 ```bash
-brew install websocat  # WebSocket 客户端
-cp scripts/qq-bridge.sh ~/.claude/qq-bridge.sh
-chmod +x ~/.claude/qq-bridge.sh
-~/.claude/qq-bridge.sh start  # 启动守护进程
+cp scripts/notify-telegram.sh ~/.claude/notify-telegram.sh
+chmod +x ~/.claude/notify-telegram.sh
+# 配置 ~/.claude/telegram.conf（参考 configs/telegram.conf.example）
 ```
 
-**依赖：** `websocat`、`jq`、`tmux`
+**依赖：** `jq`、`curl`
+
+详见 [scripts/README.md](scripts/README.md)。
+
+### telegram-bridge.sh
+
+Telegram → Claude Code 消息桥接守护进程，与 `notify-telegram.sh` 形成**双向通信**：
+
+- **出站**（notify-telegram.sh）：Claude Code 事件 → Telegram 通知到手机
+- **入站**（telegram-bridge.sh）：手机 Telegram 消息 → 注入 Claude Code 终端
+
+功能：
+- **多终端支持**：`/list` 列出所有 Claude Code 终端，`/connect <session>` 切换目标
+- 长轮询接收 Telegram 消息，通过 `tmux send-keys` 注入到 Claude Code
+- 支持授权快速回复（1/2/3）和特殊命令（`/list`、`/connect`、`/cancel`、`/status`、`/pane` 等）
+- 目标终端关闭时自动切换到剩余终端并通知
+- Claude Code 启动时自动启动（`UserPromptSubmit` hook）
+- 守护进程模式，断线自动重连 + 重连通知
+- 架构简洁：无需 websocat、FIFO、keeper 进程
+
+**安装：**
+
+```bash
+cp scripts/telegram-bridge.sh ~/.claude/telegram-bridge.sh
+chmod +x ~/.claude/telegram-bridge.sh
+# 配置 ~/.claude/telegram.conf
+~/.claude/telegram-bridge.sh start  # 启动守护进程
+```
+
+**依赖：** `jq`、`tmux`、`curl`
 
 详见 [scripts/README.md](scripts/README.md)。
 
@@ -96,9 +132,9 @@ chmod +x ~/.claude/qq-bridge.sh
 
 Hooks 允许你在 Claude Code 的特定事件点执行自定义逻辑。
 
-### notification.json — QQ 推送通知
+### notification.telegram.json — Telegram 推送通知
 
-当 Claude 完成任务、需要授权或等待输入时，通过 QQ 私聊发送格式化通知到手机：
+当 Claude 完成任务、需要授权或等待输入时，通过 Telegram Bot API 发送格式化通知到手机：
 
 | 事件 | 通知格式 |
 |------|----------|
@@ -106,9 +142,9 @@ Hooks 允许你在 Claude Code 的特定事件点执行自定义逻辑。
 | 空闲等待 | `[等待输入] 项目名 [ctx:XX%]` + Claude 回复 + 上下文 |
 | 任务完成 | `[任务完成] 项目名 [ctx:XX%]` + Claude 回复 + 上下文 |
 
-**前提条件：** LiteLoaderQQNT + LLOneBot + 双 QQ 号
+**前提条件：** Telegram Bot（通过 @BotFather 创建）
 
-**安装：** 安装 `scripts/notify-qq.sh`，将 `hooks/notification.json` 中的 hooks 合并到 `~/.claude/settings.json`。
+**安装：** 安装 `scripts/notify-telegram.sh`，将 `hooks/notification.telegram.json` 中的 hooks 合并到 `~/.claude/settings.json`。
 
 详见 [hooks/README.md](hooks/README.md)。
 
@@ -130,20 +166,53 @@ Commands 是用户通过 `/command-name` 手动触发的斜杠命令。
 
 详见 [commands/README.md](commands/README.md)。
 
+## Agent Teams / 团队协作
+
+Claude Code 实验性功能，支持多 agent 协同工作。已在本项目中实践验证。
+
+### 启用
+
+```json
+// ~/.claude/settings.json
+{
+  "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" }
+}
+
+// .claude/settings.local.json
+{
+  "teammateMode": "in-process"
+}
+```
+
+### 推荐配置
+
+| 参数 | 推荐值 | 原因 |
+|------|--------|------|
+| `mode` | `acceptEdits` | `default` 会导致 teammate 卡在权限审批 |
+| `model` | `sonnet` | haiku idle 后反复发冗长消息浪费 token |
+| `teammateMode` | `in-process` | tmux 分 pane 太挤，Shift+上/下切换更方便 |
+
+### 踩坑经验
+
+- **`mode: "default"` 会卡死** — 权限请求通过邮箱发送但 lead 收不到交互式提示，必须用 `acceptEdits`
+- **Teammate 可能崩溃** — 需要检查进程存活（`ps aux | grep 'claude.*team'`），重新生成
+- **明确 Git 规则** — 在 prompt 中写 "不要自行 commit"，否则 teammate 可能擅自提交
+- **邮箱路由** — 消息可能发到错误团队，调试看 `~/.claude/teams/{name}/inboxes/`
+
 ## Remote Access / 远程访问
 
 通过 SSH + Tailscale + tmux 实现手机远程控制 Claude Code，配合 QQ 双向通信形成完整的移动工作流：
 
 | 方式 | 适用场景 |
 |------|----------|
-| **QQ 消息** | 快速回复授权（1/2/3）、发送简短指令 |
+| **Telegram 消息** | 快速回复授权（1/2/3）、发送简短指令 |
 | **SSH + tmux** | 完整终端界面，查看输出、复杂交互 |
 
 ### 架构
 
 ```
 手机
-├── QQ → qq-bridge.sh → tmux send-keys → Claude Code（轻量指令）
+├── Telegram → telegram-bridge.sh → tmux send-keys → Claude Code（轻量指令）
 ├── SSH → tmux attach → Claude Code（完整终端）
 └── Tailscale（内网穿透，任何网络均可访问）
 ```

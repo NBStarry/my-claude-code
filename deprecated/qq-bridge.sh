@@ -9,12 +9,27 @@ QQ_API="http://localhost:3000"
 QQ_USER="794426422"
 PID_FILE="${HOME}/.claude/qq-bridge.pid"
 LOG_FILE="${HOME}/.claude/qq-bridge.log"
+FIFO_FILE="${HOME}/.claude/qq-bridge.fifo"
+STDIN_FIFO="${HOME}/.claude/qq-bridge-stdin.fifo"
 MAX_BACKOFF=60
+MAX_LOG_LINES=500
 QQ_BRIDGE_SILENT="${QQ_BRIDGE_SILENT:-0}"
 
 # ─── 日志 ───
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+# ─── 日志轮转 ───
+rotate_log() {
+    [ ! -f "$LOG_FILE" ] && return
+    local lines
+    lines=$(wc -l < "$LOG_FILE" 2>/dev/null || echo 0)
+    if [ "$lines" -gt "$MAX_LOG_LINES" ]; then
+        tail -200 "$LOG_FILE" > "${LOG_FILE}.tmp"
+        mv "${LOG_FILE}.tmp" "$LOG_FILE"
+        log "Log rotated (was ${lines} lines)"
+    fi
 }
 
 # ─── 依赖检查 ───
@@ -31,6 +46,21 @@ check_deps() {
         done
         exit 1
     fi
+}
+
+# ─── 等待 LLOneBot 上线 ───
+wait_for_llonebot() {
+    local qq_launched=0
+    while ! lsof -i :3001 -sTCP:LISTEN >/dev/null 2>&1; do
+        # QQ 未运行时尝试自动启动
+        if [ "$qq_launched" -eq 0 ] && ! pgrep -x QQ >/dev/null 2>&1; then
+            log "QQ not running, attempting to launch..."
+            open -a QQ 2>/dev/null
+            qq_launched=1
+        fi
+        log "LLOneBot not available (port 3001), waiting 10s..."
+        sleep 10
+    done
 }
 
 # ─── 自动检测 Claude Code 的 tmux pane ───
@@ -101,10 +131,18 @@ handle_special() {
             return 0 ;;
         /status)
             pane=$(find_claude_pane)
-            if [ -n "$pane" ]; then
-                send_qq_reply "[状态] 已连接，目标终端: ${pane}"
+            local ws_status="未知"
+            if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null; then
+                ws_status="运行中 (PID $(cat "$PID_FILE"))"
             else
-                send_qq_reply "[状态] 已连接，但未找到 Claude Code 终端"
+                ws_status="未运行"
+            fi
+            if [ -n "$pane" ]; then
+                send_qq_reply "[状态] Bridge: ${ws_status}
+终端: ${pane}"
+            else
+                send_qq_reply "[状态] Bridge: ${ws_status}
+终端: 未找到"
             fi
             return 0 ;;
         /help)
@@ -113,8 +151,40 @@ handle_special() {
 /escape, /e - 发送 Escape
 /enter - 发送空回车
 /status - 查看桥接状态
+/restart - 重启 bridge
+/log - 查看最近日志
+/pane - 截取终端内容
 /help - 显示此帮助
 其他文本 - 直接注入终端"
+            return 0 ;;
+        /restart)
+            send_qq_reply "[重启中] Bridge 正在重启..."
+            log "Restart requested via QQ"
+            # 先回复再重启，给 curl 时间发送
+            sleep 1
+            exec "$0" run
+            ;;
+        /log)
+            local recent
+            recent=$(tail -10 "$LOG_FILE" 2>/dev/null || echo "无日志")
+            send_qq_reply "[最近日志]
+${recent}"
+            return 0 ;;
+        /pane)
+            pane=$(find_claude_pane)
+            if [ -n "$pane" ]; then
+                local content
+                content=$(tmux capture-pane -t "$pane" -p 2>/dev/null | tail -30)
+                if [ -n "$content" ]; then
+                    # QQ 消息有长度限制，截取最后部分
+                    send_qq_reply "[终端内容] ${pane}
+${content:0:1500}"
+                else
+                    send_qq_reply "[终端内容] ${pane}: (空)"
+                fi
+            else
+                send_qq_reply "[错误] 未找到 Claude Code 终端"
+            fi
             return 0 ;;
     esac
     return 1
@@ -156,26 +226,66 @@ handle_message() {
     send_qq_reply "$confirm_text"
 }
 
+# ─── 清理子进程 ───
+cleanup() {
+    log "Bridge shutting down"
+    rm -f "$FIFO_FILE" "$STDIN_FIFO"
+    # 杀死所有子进程（包括 keeper、watchdog、websocat）
+    kill $(jobs -p) 2>/dev/null
+    wait 2>/dev/null
+}
+
 # ─── WebSocket 监听主循环 ───
 listen_loop() {
     local backoff=2
-    local fifo="${HOME}/.claude/qq-bridge.fifo"
+    local first_connect=1
 
     log "Bridge started (PID $$)"
 
-    trap 'rm -f "$fifo"; kill $(jobs -p) 2>/dev/null' EXIT
+    trap cleanup EXIT
 
     while true; do
+        rotate_log
+
+        # 连接前先检查 LLOneBot 是否可用
+        wait_for_llonebot
+
         log "Connecting to ${QQ_WS}..."
         local got_message=0
 
         # 用 FIFO 解耦 websocat 输出和读取，方便 watchdog 控制生命周期
-        rm -f "$fifo"
-        mkfifo "$fifo"
+        rm -f "$FIFO_FILE" "$STDIN_FIFO"
+        mkfifo "$FIFO_FILE"
+        mkfifo "$STDIN_FIFO"
 
-        # stdin 用 sleep 维持打开（nohup 会将 stdin 重定向到 /dev/null）
-        websocat -t "$QQ_WS" < <(sleep 2147483647) > "$fifo" 2>/dev/null &
+        # stdin keeper: exec sleep 替换子 shell，使 keeper_pid 就是 sleep 的 PID
+        # fd 3 保持 STDIN_FIFO 写端打开，防止 websocat 收到 EOF
+        (exec 3>"$STDIN_FIFO"; exec sleep 2147483647) &
+        local keeper_pid=$!
+
+        websocat -t "$QQ_WS" < "$STDIN_FIFO" > "$FIFO_FILE" 2>/dev/null &
         local ws_pid=$!
+
+        # 短暂等待确认 websocat 成功启动
+        sleep 0.5
+        if ! kill -0 $ws_pid 2>/dev/null; then
+            log "websocat failed to start"
+            rm -f "$FIFO_FILE"
+            sleep "$backoff"
+            backoff=$((backoff * 2))
+            [ "$backoff" -gt "$MAX_BACKOFF" ] && backoff=$MAX_BACKOFF
+            continue
+        fi
+
+        log "Connected successfully"
+
+        # 首次连接或重连成功时通知 QQ
+        if [ "$first_connect" -eq 1 ]; then
+            send_qq_reply "[Bridge] 已启动"
+            first_connect=0
+        elif [ "$backoff" -gt 2 ]; then
+            send_qq_reply "[Bridge] 已重新连接"
+        fi
 
         # Watchdog: 每 30 秒检查 TCP 连接状态，死连接则 kill websocat 触发重连
         # LLOneBot 不响应 WebSocket ping，需要用 lsof 检查 TCP 状态
@@ -196,13 +306,12 @@ listen_loop() {
         while IFS= read -r line; do
             got_message=1
             handle_message "$line"
-        done < "$fifo"
+        done < "$FIFO_FILE"
 
-        # 清理
-        kill $wd_pid $ws_pid 2>/dev/null
-        wait $wd_pid 2>/dev/null
-        wait $ws_pid 2>/dev/null
-        rm -f "$fifo"
+        # 清理本轮子进程（keeper、watchdog、websocat）
+        kill $keeper_pid $wd_pid $ws_pid 2>/dev/null
+        wait $keeper_pid $wd_pid $ws_pid 2>/dev/null
+        rm -f "$FIFO_FILE" "$STDIN_FIFO"
 
         # 收到过消息则重置退避
         [ "$got_message" -eq 1 ] && backoff=2
@@ -216,9 +325,15 @@ listen_loop() {
 
 # ─── 守护进程管理 ───
 cmd_start() {
-    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
-        echo "Bridge already running (PID $(cat "$PID_FILE"))"
-        exit 1
+    # 清理残留 PID 文件
+    if [ -f "$PID_FILE" ]; then
+        local old_pid
+        old_pid=$(cat "$PID_FILE" 2>/dev/null)
+        if kill -0 "$old_pid" 2>/dev/null; then
+            echo "Bridge already running (PID ${old_pid})"
+            return 0
+        fi
+        rm -f "$PID_FILE"
     fi
     check_deps
     echo "Starting QQ bridge daemon..."
@@ -230,25 +345,42 @@ cmd_start() {
 cmd_stop() {
     if [ ! -f "$PID_FILE" ]; then
         echo "No PID file found, bridge not running"
-        exit 1
+        return 0
     fi
     local pid
-    pid=$(cat "$PID_FILE")
+    pid=$(cat "$PID_FILE" 2>/dev/null)
     if kill -0 "$pid" 2>/dev/null; then
+        # 先发 TERM，让 trap 清理子进程
         kill "$pid" 2>/dev/null
-        # 等待进程退出，同时清理子进程
-        sleep 1
-        kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null
-        rm -f "$PID_FILE"
+        # 等待进程退出
+        local waited=0
+        while kill -0 "$pid" 2>/dev/null && [ $waited -lt 5 ]; do
+            sleep 1
+            waited=$((waited + 1))
+        done
+        # 如果还没退出，强制杀死
+        if kill -0 "$pid" 2>/dev/null; then
+            kill -9 "$pid" 2>/dev/null
+        fi
+        # 杀死可能残留的子进程
+        pkill -P "$pid" 2>/dev/null
+        rm -f "$PID_FILE" "$FIFO_FILE" "$STDIN_FIFO"
         echo "Stopped bridge (PID ${pid})"
     else
-        rm -f "$PID_FILE"
+        rm -f "$PID_FILE" "$FIFO_FILE" "$STDIN_FIFO"
         echo "Bridge was not running (stale PID file removed)"
     fi
 }
 
+cmd_restart() {
+    echo "Restarting bridge..."
+    cmd_stop
+    sleep 1
+    cmd_start
+}
+
 cmd_status() {
-    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null; then
         echo "Bridge running (PID $(cat "$PID_FILE"))"
         local pane
         pane=$(find_claude_pane)
@@ -257,16 +389,37 @@ cmd_status() {
         else
             echo "Claude Code pane: not found"
         fi
+        # 显示 LLOneBot 状态
+        if lsof -i :3001 -sTCP:LISTEN >/dev/null 2>&1; then
+            echo "LLOneBot: online (port 3001)"
+        else
+            echo "LLOneBot: offline"
+        fi
     else
         echo "Bridge not running"
+        [ -f "$PID_FILE" ] && rm -f "$PID_FILE" && echo "(stale PID file removed)"
     fi
+}
+
+cmd_ensure() {
+    # 幂等启动：已运行则跳过（快速路径 ~5ms）
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null; then
+        return 0
+    fi
+    # 清理残留并启动
+    rm -f "$PID_FILE"
+    check_deps 2>/dev/null || return 0
+    nohup "$0" run >> "$LOG_FILE" 2>&1 &
+    echo $! > "$PID_FILE"
 }
 
 # ─── 入口 ───
 case "${1:-}" in
-    start)  cmd_start ;;
-    stop)   cmd_stop ;;
-    status) cmd_status ;;
-    run)    check_deps; listen_loop ;;
-    *)      echo "Usage: $0 {start|stop|status|run}"; exit 1 ;;
+    start)   cmd_start ;;
+    stop)    cmd_stop ;;
+    restart) cmd_restart ;;
+    status)  cmd_status ;;
+    ensure)  cmd_ensure ;;
+    run)     check_deps; listen_loop ;;
+    *)       echo "Usage: $0 {start|stop|restart|status|ensure|run}"; exit 1 ;;
 esac

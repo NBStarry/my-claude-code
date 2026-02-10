@@ -1,78 +1,73 @@
-# CLAUDE.md - Project Conventions
+# CLAUDE.md
 
-This is a public repository for sharing Claude Code configurations, scripts, and extensions.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-- **Purpose**: Store and share Claude Code configurations, custom scripts, hooks, skills, agents, and commands
-- **Language**: Documentation is written in Chinese with English section headers for international discoverability
-- **Audience**: Claude Code users looking for configuration references and inspiration
+A public repository for sharing Claude Code configurations, custom scripts, hooks, skills, agents, and commands. Documentation is written in Chinese with English section headers. No build system or tests — this is a configuration/documentation repo.
 
-## Directory Conventions
+## Architecture
 
-- `configs/` - Configuration files (settings.json, settings.local.json)
-- `scripts/` - Executable scripts (statusline, utilities)
-- `hooks/` - Hook configurations and examples (PreToolUse, PostToolUse, Stop, UserPromptSubmit)
-- `skills/` - Skill definitions following the SKILL.md pattern
-- `agents/` - Agent definitions as markdown files with YAML frontmatter
-- `commands/` - Slash command definitions as markdown files with YAML frontmatter
+### Bidirectional Communication System (Telegram)
 
-## File Conventions
+The most complex feature spans `scripts/` and `hooks/`:
 
-- All shell scripts must have `#!/bin/bash` shebang and be marked executable
-- All scripts must include a comment header explaining their purpose
-- JSON files must be valid and properly formatted (2-space indentation)
-- Markdown files use YAML frontmatter where applicable (skills, agents, commands)
-- Use UTF-8 encoding for all files
+- **Outbound** (`scripts/notify-telegram.sh`): Hook-triggered script that sends formatted notifications via Telegram Bot API
+- **Inbound** (`scripts/telegram-bridge.sh`): Long-polling daemon that fetches Telegram messages and injects them into Claude Code's tmux pane via `tmux send-keys`. Supports multi-pane routing — detects all Claude Code instances across tmux sessions, with `/list` and `/connect <session>` commands for switching
+- **Hook wiring** (`hooks/notification.telegram.json`): Connects `Notification` (permission_prompt, idle_prompt) and `Stop` events to `notify-telegram.sh`
+- **Config** (`configs/telegram.conf.example`): Shared configuration for bot token and chat ID
 
-## Documentation Style
+Both scripts load config from `~/.claude/telegram.conf`. QQ variant has been deprecated to `deprecated/`.
 
-- README files in each directory explain what the directory contains and how to use its contents
-- The main README.md uses Chinese for descriptions with English section headers
-- Code comments in scripts may be in Chinese or English
+### Directory Structure Convention
 
-## Naming Conventions
+Each content directory follows the same pattern:
+- `README.md` — explains the directory's purpose and usage
+- `examples/` — contains template files showing the expected format
+- Production files live at the directory root (not in `examples/`)
 
-- Scripts: `kebab-case.sh` (e.g., `statusline.sh`)
-- Hook configs: `kebab-case.json` (e.g., `warn-dangerous-rm.json`)
-- Skills: directory name matches skill name, `SKILL.md` inside
-- Agents: `kebab-case.md` (e.g., `code-reviewer.md`)
-- Commands: `kebab-case.md` (e.g., `deploy-check.md`)
+### Extension Format Reference
+
+| Type | Location | Format |
+|------|----------|--------|
+| Skills | `skills/<name>/SKILL.md` | Markdown with YAML frontmatter (`name`, `description`, `version`) |
+| Agents | `agents/<name>.md` | Markdown with YAML frontmatter (`name`, `description`, `model`, `tools`) |
+| Commands | `commands/<name>.md` | Markdown with YAML frontmatter (`description`, `argument-hint`, `allowed-tools`) |
+| Hooks | `hooks/<name>.json` | JSON with `hooks` object keyed by event type |
+| Configs | `configs/<name>.json` | Claude Code settings files |
+
+### configs/CLAUDE.md
+
+Contains global Claude Code instructions meant to be installed at `~/.claude/CLAUDE.md`. Currently enforces:
+- Code changes and related documentation updates must be in the same commit
+- Agent Teams model selection: Lead uses Opus, teammates default to Sonnet (Opus for complex tasks), never use Haiku
 
 ## Git Branching Workflow
 
-- **`main`** — 稳定分支，仅包含用户亲自验证通过的配置
-- **`dev`** — 开发分支，所有新增和修改先提交到这里
+- **`main`** — stable branch, only contains user-verified configurations
+- **`dev`** — development branch, all changes go here first
 
-### Rules / 规则
+### Rules
 
-1. **所有改动必须先提交到 `dev` 分支**，禁止直接向 `main` 提交未验证的改动
-2. 每次向 `dev` 提交前，必须先在 `VERIFY.md` 中添加对应的待验证记录，并包含在同一个 commit 中
-3. 用户亲自测试改动效果后，在 `VERIFY.md` 中勾选对应条目
-4. 只有 `VERIFY.md` 中相关条目全部标记为 `[x]` 后，才可将 `dev` 合并到 `main`
-5. 合并方式：`git checkout main && git merge dev`，然后推送
+1. **All changes must go to `dev` first** — never commit unverified changes directly to `main`
+2. Every `dev` commit must include a corresponding entry in `VERIFY.md` (in the same commit)
+3. User manually tests, then checks off items in `VERIFY.md`
+4. Only merge to `main` when all related `VERIFY.md` entries are marked `[x]`
+5. Merge: `git checkout main && git merge dev`, then push
 
-### VERIFY.md Format / 验证记录格式
+### VERIFY.md Entry Format
 
 ```markdown
-- [ ] **改动简述** (commit: abc1234, date: YYYY-MM-DD)
-  - 验证方法：如何测试
-  - 预期效果：期望结果
-  - 实际效果：（验证后填写）
+- [ ] **Change summary** (commit: abc1234, date: YYYY-MM-DD)
+  - 验证方法：how to test
+  - 预期效果：expected result
+  - 实际效果：（fill after verification）
 ```
 
-## When Adding New Content
+## File Conventions
 
-1. **Switch to `dev` branch first** (`git checkout dev`)
-2. Place the file in the appropriate directory
-3. Update the directory's README.md if needed
-4. Update the root README.md if adding a new category
-5. Include usage instructions and any dependencies
-6. Add a verification entry in `VERIFY.md`（必须包含在同一个 commit 中）
-7. Commit and push to `dev`
-8. Wait for user verification before merging to `main`
-
-## Sensitive Information
-
-- NEVER commit API keys, tokens, or secrets
-- Configuration examples should use placeholder values where credentials would appear
+- Shell scripts: `#!/bin/bash` shebang, executable permission, comment header explaining purpose
+- JSON: 2-space indentation
+- Naming: `kebab-case` for all files (`.sh`, `.json`, `.md`)
+- Markdown with YAML frontmatter for skills, agents, commands
+- Configuration examples use placeholder values where credentials would appear
