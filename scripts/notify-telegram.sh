@@ -115,22 +115,16 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
 fi
 
 # 提取 Claude 最后的回复（仅文本部分）
+# 使用 jq -sr 直接处理 JSONL，避免 bash while-read 对超长行截断
 REPLY=""
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-    REPLY=$(tail -r "$TRANSCRIPT_PATH" 2>/dev/null | while read -r line; do
-        TYPE=$(echo "$line" | jq -r '.type // ""' 2>/dev/null)
-        if [ "$TYPE" = "assistant" ]; then
-            TEXT=$(echo "$line" | jq -r '
-                [.message.content[]? | select(.type == "text") | .text] | join("\n")
-            ' 2>/dev/null)
-            if [ -n "$TEXT" ]; then
-                echo "$TEXT"
-                break
-            fi
-        fi
-    done)
-    [ -n "$REPLY" ] && REPLY="${REPLY:0:300}"
+    REPLY=$(tail -20 "$TRANSCRIPT_PATH" 2>/dev/null | jq -sr '
+        [.[] | select(.type == "assistant")] | last |
+        [.message.content[]? | select(.type == "text") | .text] | join("\n") // ""
+    ' 2>/dev/null)
 fi
+
+FULL_CONTENT_FILE="${HOME}/.claude/telegram-bridge.full-content.txt"
 
 # ─── 根据 hook 类型构建消息 ───
 
@@ -162,21 +156,13 @@ elif [ "$HOOK_TYPE" = "permission_prompt" ]; then
     TOOL_NAME=""
     TOOL_DETAILS=""
 
-    # 从 transcript 提取工具调用信息
+    # 从 transcript 提取工具调用信息（jq -sr 避免大行截断）
     if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-        TOOL_INFO=$(tail -r "$TRANSCRIPT_PATH" 2>/dev/null | head -20 | while read -r line; do
-            TYPE=$(echo "$line" | jq -r '.type // ""' 2>/dev/null)
-            if [ "$TYPE" = "assistant" ]; then
-                TOOL_CALL=$(echo "$line" | jq -r '
-                    .message.content[]? | select(.type == "tool_use") |
-                    {name: .name, input: .input} | @json
-                ' 2>/dev/null | head -1)
-                if [ -n "$TOOL_CALL" ]; then
-                    echo "$TOOL_CALL"
-                    break
-                fi
-            fi
-        done)
+        TOOL_INFO=$(tail -20 "$TRANSCRIPT_PATH" 2>/dev/null | jq -sr '
+            [.[] | select(.type == "assistant")] | last |
+            [.message.content[]? | select(.type == "tool_use") | {name: .name, input: .input}] |
+            last // empty | @json
+        ' 2>/dev/null)
 
         if [ -n "$TOOL_INFO" ]; then
             TOOL_NAME=$(echo "$TOOL_INFO" | jq -r '.name // empty')
@@ -275,18 +261,68 @@ fi
 
 log "Sending: ${NOTIFICATION_TEXT:0:200}..."
 
-# Telegram 消息限制 4096 字符，超长截断
-if [ ${#NOTIFICATION_TEXT} -gt 4096 ]; then
-    NOTIFICATION_TEXT="${NOTIFICATION_TEXT:0:4090}
-..."
+# 保存完整内容供 /full 使用
+printf '%s\n' "$NOTIFICATION_TEXT" > "$FULL_CONTENT_FILE"
+
+# 权限请求时追加完整工具调用详情（代码修改、写入内容等）
+if [ "$HOOK_TYPE" = "permission_prompt" ] && [ -n "$TOOL_INFO" ]; then
+    {
+        echo ""
+        echo "━━━ 完整工具调用详情 ━━━"
+        case "$TOOL_NAME" in
+            Edit)
+                echo "文件: $(echo "$TOOL_INFO" | jq -r '.input.file_path // ""')"
+                echo ""
+                echo "--- 原内容 ---"
+                echo "$TOOL_INFO" | jq -r '.input.old_string // ""'
+                echo ""
+                echo "+++ 新内容 +++"
+                echo "$TOOL_INFO" | jq -r '.input.new_string // ""'
+                ;;
+            Write)
+                echo "文件: $(echo "$TOOL_INFO" | jq -r '.input.file_path // ""')"
+                echo ""
+                echo "--- 写入内容 ---"
+                echo "$TOOL_INFO" | jq -r '.input.content // ""'
+                ;;
+            Bash)
+                echo "命令:"
+                echo "$TOOL_INFO" | jq -r '.input.command // ""'
+                ;;
+            *)
+                echo "$TOOL_INFO" | jq '.' 2>/dev/null
+                ;;
+        esac
+    } >> "$FULL_CONTENT_FILE"
 fi
 
-# 发送 Telegram 消息（后台，不阻塞 hook）
-curl -s -X POST "${TELEGRAM_API}/sendMessage" \
-    $CURL_PROXY_ARGS \
-    -H 'Content-Type: application/json' \
-    -d "$(jq -n --arg text "$NOTIFICATION_TEXT" --arg chat_id "$TELEGRAM_CHAT_ID" \
-        '{chat_id: $chat_id, text: $text}')" \
-    > /dev/null 2>&1 &
+if [ ${#NOTIFICATION_TEXT} -le 4096 ]; then
+    # 未超限：直接发送文本消息
+    curl -s -X POST "${TELEGRAM_API}/sendMessage" \
+        $CURL_PROXY_ARGS \
+        -H 'Content-Type: application/json' \
+        -d "$(jq -n --arg text "$NOTIFICATION_TEXT" --arg chat_id "$TELEGRAM_CHAT_ID" \
+            '{chat_id: $chat_id, text: $text}')" \
+        > /dev/null 2>&1 &
+else
+    # 超限：发送摘要文本 + 自动发送完整内容文件
+    # 摘要：标题行 + 截断提示
+    SUMMARY=$(echo "$NOTIFICATION_TEXT" | head -1)
+    SUMMARY="${SUMMARY}
+
+(完整内容见附件)"
+    curl -s -X POST "${TELEGRAM_API}/sendMessage" \
+        $CURL_PROXY_ARGS \
+        -H 'Content-Type: application/json' \
+        -d "$(jq -n --arg text "$SUMMARY" --arg chat_id "$TELEGRAM_CHAT_ID" \
+            '{chat_id: $chat_id, text: $text}')" \
+        > /dev/null 2>&1
+    # 自动发送完整内容文件
+    curl -s -X POST "${TELEGRAM_API}/sendDocument" \
+        $CURL_PROXY_ARGS \
+        -F "chat_id=${TELEGRAM_CHAT_ID}" \
+        -F "document=@${FULL_CONTENT_FILE};filename=notification.txt" \
+        > /dev/null 2>&1 &
+fi
 
 exit 0

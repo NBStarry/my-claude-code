@@ -27,6 +27,7 @@ PID_FILE="${HOME}/.claude/telegram-bridge.pid"
 LOG_FILE="${HOME}/.claude/telegram-bridge.log"
 OFFSET_FILE="${HOME}/.claude/telegram-bridge.offset"
 ACTIVE_PANE_FILE="${HOME}/.claude/telegram-bridge.active-pane"
+FULL_CONTENT_FILE="${HOME}/.claude/telegram-bridge.full-content.txt"
 POLL_TIMEOUT=30
 MAX_LOG_LINES=500
 TELEGRAM_BRIDGE_SILENT="${TELEGRAM_BRIDGE_SILENT:-0}"
@@ -80,6 +81,19 @@ send_telegram_reply() {
         -H 'Content-Type: application/json' \
         -d "$(jq -n --arg text "$1" --arg chat_id "$TELEGRAM_CHAT_ID" \
             '{chat_id: $chat_id, text: $text}')" \
+        > /dev/null 2>&1 &
+}
+
+# ─── 发送 Telegram 文件 ───
+send_telegram_file() {
+    local file="$1"
+    local caption="${2:-}"
+    [ ! -f "$file" ] && return 1
+    curl -s -X POST "${TELEGRAM_API}/sendDocument" \
+        $CURL_PROXY_ARGS \
+        -F "chat_id=${TELEGRAM_CHAT_ID}" \
+        -F "document=@${file}" \
+        -F "caption=${caption}" \
         > /dev/null 2>&1 &
 }
 
@@ -308,6 +322,7 @@ ${pane_info}
 /restart - 重启 bridge
 /log - 查看最近日志
 /pane - 截取终端内容
+/full - 发送完整终端内容（文件）
 /help - 显示此帮助
 其他文本 - 直接注入终端"
             return 0 ;;
@@ -325,13 +340,34 @@ ${recent}"
             return 0 ;;
         /pane)
             resolve_pane || return 0
-            local content
-            content=$(tmux capture-pane -t "$_pane" -p 2>/dev/null | tail -30)
-            if [ -n "$content" ]; then
-                send_telegram_reply "[终端内容] ${_pane}
-${content:0:3000}"
-            else
+            local raw_content display_content
+            raw_content=$(tmux capture-pane -t "$_pane" -p -S - 2>/dev/null)
+            if [ -z "$raw_content" ]; then
                 send_telegram_reply "[终端内容] ${_pane}: (空)"
+                return 0
+            fi
+            # 保存完整内容到文件
+            echo "$raw_content" > "$FULL_CONTENT_FILE"
+            # 手机友好版：去装饰线 + 截断行宽 + 取最后 20 行
+            display_content=$(echo "$raw_content" \
+                | grep -v '^[─━═─-]\{10,\}$' \
+                | sed 's/[[:space:]]*$//' \
+                | grep -v '^$' \
+                | cut -c1-60 \
+                | tail -20)
+            local hint=""
+            local raw_lines
+            raw_lines=$(echo "$raw_content" | wc -l | tr -d ' ')
+            [ "$raw_lines" -gt 20 ] && hint="
+发送 /full 查看完整内容 (${raw_lines} 行)"
+            send_telegram_reply "[终端内容] ${_pane}
+${display_content:0:2000}${hint}"
+            return 0 ;;
+        /full)
+            if [ -f "$FULL_CONTENT_FILE" ]; then
+                send_telegram_file "$FULL_CONTENT_FILE" "[完整内容]"
+            else
+                send_telegram_reply "[错误] 无缓存内容"
             fi
             return 0 ;;
     esac
@@ -360,16 +396,33 @@ handle_update() {
         return
     fi
 
-    # 授权选项的友好确认
-    local confirm_text="[已发送] ${text:0:100}"
+    # 授权选项：用方向键导航（Claude Code 权限对话框是交互式列表选择器）
     case "$text" in
-        1) confirm_text="[已选择] 1. Yes" ;;
-        2) confirm_text="[已选择] 2. Yes, don't ask again" ;;
-        3) confirm_text="[已选择] 3. No" ;;
+        1)
+            resolve_pane && {
+                tmux send-keys -t "$_pane" Enter
+                send_telegram_reply "[已选择] 1. Yes"
+            }
+            return ;;
+        2)
+            resolve_pane && {
+                tmux send-keys -t "$_pane" Down
+                tmux send-keys -t "$_pane" Enter
+                send_telegram_reply "[已选择] 2. Yes, don't ask again"
+            }
+            return ;;
+        3)
+            resolve_pane && {
+                tmux send-keys -t "$_pane" Down
+                tmux send-keys -t "$_pane" Down
+                tmux send-keys -t "$_pane" Enter
+                send_telegram_reply "[已选择] 3. No"
+            }
+            return ;;
     esac
 
     inject_to_tmux "$text"
-    send_telegram_reply "$confirm_text"
+    send_telegram_reply "[已发送] ${text:0:100}"
 }
 
 # ─── 长轮询主循环 ───
