@@ -31,6 +31,7 @@ my-claude-code/
 |------|------|
 | `configs/settings.json` | 全局配置示例（Telegram 通知），包含 hook 配置和 statusline 设置 |
 | `configs/settings.local.json` | 项目级配置示例，包含输出风格和权限设置 |
+| `configs/recommended-plugins.json` | 推荐插件列表（superpowers、commit-commands、code-review 等 10 个） |
 
 ```bash
 # 全局配置

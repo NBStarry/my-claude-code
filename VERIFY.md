@@ -35,6 +35,14 @@
 
 <!-- 已验证通过并合并到 main 的改动记录 -->
 
+- [x] **CLAUDE.md 质量优化：Quick Start + 去重 + 补全架构文档** (commit: abf0ecc, date: 2026-02-10)
+  - 验证方法：确认 Quick Start、statusline、deprecated 章节存在，行为规则无重复
+  - 实际效果：验证通过
+
+- [x] **Insights 优化事项落实：CLAUDE.md 规则 + merge-verified skill + bash-syntax-check hook** (commit: f4bf932, date: 2026-02-10)
+  - 验证方法：确认新规则生效，skill 和 hook 文件就位
+  - 实际效果：验证通过
+
 - [x] **Telegram 通知完整内容 + /full + 权限选项修复** (commit: aadafba, date: 2026-02-10)
   - 验证方法：/full 获取完整代码修改、权限选项 2 导航、/pane 完整滚动历史
   - 实际效果：全部功能正常

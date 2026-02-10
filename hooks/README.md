@@ -68,6 +68,24 @@ Hooks 允许你在 Claude Code 的特定事件点执行自定义逻辑，用于�
 - 支持代理配置，适合网络受限环境
 - 跨平台（Windows/macOS/Linux）
 
+## bash-syntax-check.json — Shell 脚本语法检查
+
+通过 prompt-based hook 在 `git commit` 前验证所有已暂存 `.sh` 文件的语法正确性。
+
+| 配置项 | 值 |
+|--------|-----|
+| 事件 | `PreToolUse` (Bash) |
+| 类型 | `prompt`（AI 判断） |
+| 检查内容 | `git commit` 时，确认所有 `.sh` 文件已通过 `bash -n` |
+| 触发动作 | 未检查则 BLOCK，已检查则 ALLOW |
+
+**安装方式：** 将 `bash-syntax-check.json` 中的 hooks 内容合并到 `~/.claude/settings.json`。
+
+**优势：**
+- 防止语法错误的 Shell 脚本被提交
+- 无需手动记住执行 `bash -n`
+- 使用 prompt-based hook，智能判断上下文
+
 ## Examples / 示例
 
-参见 `examples/` 目录和 `notification.telegram.json`。
+参见 `examples/` 目录、`notification.telegram.json` 和 `bash-syntax-check.json`。

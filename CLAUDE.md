@@ -6,6 +6,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A public repository for sharing Claude Code configurations, custom scripts, hooks, skills, agents, and commands. Documentation is written in Chinese with English section headers. No build system or tests — this is a configuration/documentation repo.
 
+**Tech stack**: Shell (bash scripts), Markdown, JSON, HTML/CSS/JavaScript. Primary deployment target is GitHub Pages. All `.sh` files must pass `bash -n` syntax check before committing.
+
+## Quick Start
+
+```bash
+# Clone and switch to dev branch
+git clone https://github.com/NBStarry/my-claude-code.git
+cd my-claude-code && git checkout dev
+
+# Install global CLAUDE.md rules
+cp configs/CLAUDE.md ~/.claude/CLAUDE.md
+
+# Install Telegram notifications (requires: telegram.conf, tmux, jq, curl)
+cp configs/telegram.conf.example ~/.claude/telegram.conf  # edit with your bot token + chat ID
+# Then merge hooks/notification.telegram.json into ~/.claude/settings.json
+
+# Start Telegram bridge daemon (in tmux)
+bash scripts/telegram-bridge.sh &
+```
+
 ## Architecture
 
 ### Bidirectional Communication System (Telegram)
@@ -17,7 +37,15 @@ The most complex feature spans `scripts/` and `hooks/`:
 - **Hook wiring** (`hooks/notification.telegram.json`): Connects `Notification` (permission_prompt, idle_prompt) and `Stop` events to `notify-telegram.sh`
 - **Config** (`configs/telegram.conf.example`): Shared configuration for bot token and chat ID
 
-Both scripts load config from `~/.claude/telegram.conf`. QQ variant has been deprecated to `deprecated/`.
+Both scripts load config from `~/.claude/telegram.conf`. Requires `jq`, `curl`, and `tmux`. QQ variant has been deprecated to `deprecated/`.
+
+### Status Line
+
+`scripts/statusline.sh` — Custom Claude Code status bar showing `user@host:dir`, model name, Git branch, and context usage percentage. Installed via Claude Code settings.
+
+### Deprecated
+
+`deprecated/` — Contains retired QQ-based scripts (`notify-qq.sh`, `qq-bridge.sh`, etc.) preserved for reference. Do not modify or extend these files.
 
 ### Directory Structure Convention
 
@@ -35,12 +63,16 @@ Each content directory follows the same pattern:
 | Commands | `commands/<name>.md` | Markdown with YAML frontmatter (`description`, `argument-hint`, `allowed-tools`) |
 | Hooks | `hooks/<name>.json` | JSON with `hooks` object keyed by event type |
 | Configs | `configs/<name>.json` | Claude Code settings files |
+| Plugins | `configs/recommended-plugins.json` | Recommended plugin list with install commands |
 
 ### configs/CLAUDE.md
 
 Contains global Claude Code instructions meant to be installed at `~/.claude/CLAUDE.md`. Currently enforces:
 - Code changes and related documentation updates must be in the same commit
-- Agent Teams model selection: Lead uses Opus, teammates default to Sonnet (Opus for complex tasks), never use Haiku
+- Edit files only after fresh Read — never assume content
+- Shell scripts: test runtime behavior, use `bash -n` before commit, incremental regex testing
+- Approach-first workflow: propose approach before executing non-trivial fixes
+- Agent Teams: Lead uses Opus, teammates default to Sonnet, verify files on disk, checkpoint summaries
 
 ## Git Branching Workflow
 
@@ -71,3 +103,7 @@ Contains global Claude Code instructions meant to be installed at `~/.claude/CLA
 - Naming: `kebab-case` for all files (`.sh`, `.json`, `.md`)
 - Markdown with YAML frontmatter for skills, agents, commands
 - Configuration examples use placeholder values where credentials would appear
+
+## Behavioral Rules
+
+Editing safety, shell debugging, approach-first workflow, and Agent Teams rules are defined in the global `~/.claude/CLAUDE.md` (source: `configs/CLAUDE.md`). Those rules apply to all projects and are not repeated here to avoid drift.
