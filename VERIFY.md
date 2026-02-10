@@ -27,7 +27,10 @@
   - 实际效果：（验证后填写）
 -->
 
-<!-- 当前无待验证项目 -->
+- [ ] **CLAUDE.md 改进：依赖说明 + bash-syntax-check hook + skills 说明** (commit: pending, date: 2026-02-10)
+  - 验证方法：阅读 CLAUDE.md，确认新增内容准确且有价值
+  - 预期效果：Quick Start 有依赖说明、Architecture 包含 bash-syntax-check hook、skills/ 说明清晰
+  - 实际效果：（验证后填写）
 
 ---
 
