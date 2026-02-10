@@ -27,28 +27,21 @@
   - 实际效果：（验证后填写）
 -->
 
-- [ ] **Insights 优化事项落实：CLAUDE.md 规则 + merge-verified skill + bash-syntax-check hook** (commit: f4bf932, date: 2026-02-10)
-
-- [ ] **CLAUDE.md 质量优化：Quick Start + 去重 + 补全架构文档** (commit: 39bcc1d, date: 2026-02-10)
-  - 验证方法：
-    1. 新会话中确认 Claude 正确读取项目 CLAUDE.md（含 Quick Start、statusline、deprecated）
-    2. 确认行为规则不重复出现（项目 CLAUDE.md 只有指向全局的 pointer）
-    3. 检查 Extension Format Reference 包含 Plugins 行
-  - 预期效果：CLAUDE.md 结构清晰，无重复内容，新贡献者有明确入口
-  - 实际效果：（验证后填写）
-  - 验证方法：
-    1. 新会话中确认 Claude 遵守 approach-first workflow（非简单任务先提方案）
-    2. 确认编辑文件前会先 Read（不假设内容）
-    3. 运行 `/merge-verified`，确认按流程检查 VERIFY.md → bash -n → 合并摘要
-    4. 修改 .sh 文件后尝试 commit，确认 bash-syntax-check hook 提醒先做语法检查
-  - 预期效果：所有新规则生效，skill 和 hook 正常触发
-  - 实际效果：（验证后填写）
+<!-- 当前无待验证项目 -->
 
 ---
 
 ## Verified / 已验证项目
 
 <!-- 已验证通过并合并到 main 的改动记录 -->
+
+- [x] **CLAUDE.md 质量优化：Quick Start + 去重 + 补全架构文档** (commit: abf0ecc, date: 2026-02-10)
+  - 验证方法：确认 Quick Start、statusline、deprecated 章节存在，行为规则无重复
+  - 实际效果：验证通过
+
+- [x] **Insights 优化事项落实：CLAUDE.md 规则 + merge-verified skill + bash-syntax-check hook** (commit: f4bf932, date: 2026-02-10)
+  - 验证方法：确认新规则生效，skill 和 hook 文件就位
+  - 实际效果：验证通过
 
 - [x] **Telegram 通知完整内容 + /full + 权限选项修复** (commit: aadafba, date: 2026-02-10)
   - 验证方法：/full 获取完整代码修改、权限选项 2 导航、/pane 完整滚动历史
