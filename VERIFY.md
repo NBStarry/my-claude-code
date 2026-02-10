@@ -27,53 +27,33 @@
   - 实际效果：（验证后填写）
 -->
 
-- [ ] **Telegram 通知完整内容 + /full + 权限选项修复** (date: 2026-02-10)
-  - 验证方法：
-    1. 触发 Edit 权限请求，检查通知是否正常显示
-    2. 发送 /full，确认附件包含完整代码修改详情（原内容 + 新内容）
-    3. 等待任务完成（stop hook），确认回复内容完整不截断
-    4. 发送 /pane 后发送 /full，确认附件包含完整终端滚动历史
-    5. 发送选项 2（don't ask again），确认权限对话框正确选中第二项
-    6. 超长通知（>4096 字符）自动发送文件附件
-  - 预期效果：/full 获取完整内容、权限选项 2 生效、长通知自动附件
-  - 实际效果：（验证后填写）
-
-- [ ] **telegram-bridge.sh 多终端支持** (date: 2026-02-09)
-  - 验证方法：
-    1. 在两个 tmux session 中启动 Claude Code
-    2. 发送 /list，确认列出两个终端
-    3. 发送 /connect <session>，确认切换成功
-    4. 发送消息，确认注入到正确的终端
-    5. 关闭一个终端，确认自动切换 + 通知
-    6. 检查通知消息是否包含 /connect 提示
-  - 预期效果：session 名切换、自动失效检测、通知含切换提示
-  - 实际效果：（验证后填写）
-
-- [ ] **Telegram 双向通信系统** (date: 2026-02-09)
-  - 验证方法：
-    1. 配置 ~/.claude/telegram.conf（Bot Token + Chat ID）
-    2. 触发 stop/idle_prompt/permission_prompt hook，检查 Telegram 收到格式化通知
-    3. 启动 telegram-bridge.sh，从 Telegram 发送消息/命令验证桥接注入
-    4. 测试特殊命令：/status、/cancel、/pane、/help
-    5. 重启 Claude Code，检查 bridge 是否通过 UserPromptSubmit hook 自动启动
-  - 预期效果：功能与 QQ 方案完全对等，长轮询稳定，无需 websocat/LLOneBot
-  - 实际效果：（验证后填写）
-
-- [ ] **configs/CLAUDE.md 添加 Agent Teams 模型规则** (date: 2026-02-09)
-  - 验证方法：新会话中创建 Agent Team，确认 Lead 使用 Opus、Teammate 默认使用 Sonnet、不使用 Haiku
-  - 预期效果：Team 创建时自动遵循模型选择规则
-  - 实际效果：（验证后填写）
-
-- [ ] **CLAUDE.md 重写 + 启用 Agent Teams 配置** (date: 2026-02-09)
-  - 验证方法：新会话中确认 Claude Code 能正确读取 CLAUDE.md 中的架构说明和 Git 工作流规则；确认 Agent Teams 功能可用
-  - 预期效果：CLAUDE.md 提供有效的项目指导；settings.local.json 中 Agent Teams 配置生效
-  - 实际效果：（验证后填写）
+<!-- 当前无待验证项目 -->
 
 ---
 
 ## Verified / 已验证项目
 
 <!-- 已验证通过并合并到 main 的改动记录 -->
+
+- [x] **Telegram 通知完整内容 + /full + 权限选项修复** (commit: aadafba, date: 2026-02-10)
+  - 验证方法：/full 获取完整代码修改、权限选项 2 导航、/pane 完整滚动历史
+  - 实际效果：全部功能正常
+
+- [x] **telegram-bridge.sh 多终端支持** (commit: 42bfb6a, date: 2026-02-09)
+  - 验证方法：/list 列出终端、/connect 切换、自动失效检测
+  - 实际效果：session 切换和自动检测正常
+
+- [x] **Telegram 双向通信系统** (commit: 4c8ce1d, date: 2026-02-09)
+  - 验证方法：Telegram 收发通知、bridge 消息注入、特殊命令
+  - 实际效果：长轮询稳定，功能完整
+
+- [x] **configs/CLAUDE.md 添加 Agent Teams 模型规则** (commit: c98b850, date: 2026-02-09)
+  - 验证方法：Agent Team 创建时遵循模型选择规则
+  - 实际效果：验证通过
+
+- [x] **CLAUDE.md 重写 + 启用 Agent Teams 配置** (commit: 17ed37f, date: 2026-02-09)
+  - 验证方法：Claude Code 正确读取架构说明和 Git 工作流规则
+  - 实际效果：验证通过
 
 - [x] **QQ 消息桥接 (qq-bridge.sh)** (commit: 6beec01+5198337, date: 2026-02-06)
   - 前提：websocat 已安装，tmux 中运行 Claude Code，LLOneBot 在线
