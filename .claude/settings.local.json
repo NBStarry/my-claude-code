@@ -34,7 +34,8 @@
       "Bash(tmux capture-pane:*)",
       "Bash(python3:*)",
       "Bash(ruby -e:*)",
-      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code diff scripts/notify-telegram.sh)"
+      "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code diff scripts/notify-telegram.sh)",
+      "Bash(git rebase:*)"
     ]
   },
   "outputStyle": "Explanatory",

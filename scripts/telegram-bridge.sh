@@ -98,13 +98,20 @@ send_telegram_file() {
 }
 
 # ─── 列出所有 Claude Code 的 tmux pane ───
-# 通过 pane_title 检测（Claude Code 设置标题含 "Claude"）
+# 双重检测：pane_title 含 "claude" 或子进程中有 claude 命令
 # 输出格式: pane_id path (每行一条)
 list_claude_panes() {
-    tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index}|#{pane_title}|#{pane_current_path}' 2>/dev/null \
-        | grep -i 'claude' \
-        | while IFS='|' read -r pane_id title path; do
-            echo "$pane_id $path"
+    tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index}|#{pane_title}|#{pane_current_path}|#{pane_pid}' 2>/dev/null \
+        | while IFS='|' read -r pane_id title path pid; do
+            # 方法1: title 匹配（快速路径）
+            if echo "$title" | grep -qi 'claude'; then
+                echo "$pane_id $path"
+                continue
+            fi
+            # 方法2: 子进程匹配（兜底，覆盖 title 不含 claude 的情况）
+            if pgrep -P "$pid" -af "claude" >/dev/null 2>&1; then
+                echo "$pane_id $path"
+            fi
         done
 }
 

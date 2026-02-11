@@ -32,6 +32,11 @@
   - 预期效果：Quick Start 有依赖说明、Architecture 包含 bash-syntax-check hook、skills/ 说明清晰
   - 实际效果：（验证后填写）
 
+- [ ] **telegram-bridge /list 进程检测兜底** (commit: dd99df9, date: 2026-02-10)
+  - 验证方法：在多个 tmux session 运行 Claude Code（包括 title 不含 "claude" 的），发送 /list 确认全部被检测到
+  - 预期效果：所有运行 Claude Code 的 pane 都出现在列表中
+  - 实际效果：（验证后填写）
+
 ---
 
 ## Verified / 已验证项目
