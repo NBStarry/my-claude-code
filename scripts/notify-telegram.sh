@@ -218,8 +218,19 @@ ${TOOL_DETAILS}"
 
     # 从终端截取实际授权选项（动态，非硬编码）
     PERM_OPTIONS=""
-    PERM_PANE=$(tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index}|#{pane_title}|#{pane_current_path}' 2>/dev/null \
-        | grep -i 'claude' | grep "|${CWD}$" | head -1 | cut -d'|' -f1)
+    # 双重检测：title 匹配 或 子进程匹配（与 bridge 一致）
+    PERM_PANE=""
+    while IFS='|' read -r _pid _ptitle _ppath _ppid; do
+        [ "$_ppath" != "$CWD" ] && continue
+        if echo "$_ptitle" | grep -qi 'claude'; then
+            PERM_PANE="$_pid"
+            break
+        fi
+        if pgrep -P "$_ppid" -af "claude" >/dev/null 2>&1; then
+            PERM_PANE="$_pid"
+            break
+        fi
+    done < <(tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index}|#{pane_title}|#{pane_current_path}|#{pane_pid}' 2>/dev/null)
     if [ -n "$PERM_PANE" ]; then
         # 只提取权限对话框范围内的选项（Do you want to proceed ~ Esc to cancel）
         PERM_OPTIONS=$(tmux capture-pane -t "$PERM_PANE" -p 2>/dev/null \
@@ -228,20 +239,19 @@ ${TOOL_DETAILS}"
             | sed 's/^\s*❯\s*/❯ /; s/^\s*/  /' \
             | head -5)
     fi
-    if [ -n "$PERM_OPTIONS" ]; then
-        NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
-
-━━━ 授权选项 ━━━
-${PERM_OPTIONS}"
-    else
+    PERM_OPTIONS_FILE="${HOME}/.claude/telegram-bridge.perm-options.txt"
+    if [ -z "$PERM_OPTIONS" ]; then
         # 回退：无法截取时使用默认选项
-        NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
-
-━━━ 授权选项 ━━━
-❯ 1. Yes
+        PERM_OPTIONS="❯ 1. Yes
   2. Yes, don't ask again
   3. No"
     fi
+    # 保存实际选项供 bridge 读取（选择确认时显示）
+    printf '%s\n' "$PERM_OPTIONS" > "$PERM_OPTIONS_FILE"
+    NOTIFICATION_TEXT="${NOTIFICATION_TEXT}
+
+━━━ 授权选项 ━━━
+${PERM_OPTIONS}"
 
 else
     NOTIFICATION_TEXT="[通知] ${PROJECT}${CTX_INFO}${AGENT_INFO}
@@ -250,7 +260,13 @@ fi
 
 # 多终端时附加 /connect 切换提示
 CONNECT_HINT=""
-PANE_COUNT=$(tmux list-panes -a -F '#{pane_title}' 2>/dev/null | grep -ic 'claude' || echo 0)
+# 双重检测计数（title + 进程），与 bridge 一致
+PANE_COUNT=0
+while IFS='|' read -r _pid _ptitle _ppath _ppid; do
+    if echo "$_ptitle" | grep -qi 'claude' || pgrep -P "$_ppid" -af "claude" >/dev/null 2>&1; then
+        PANE_COUNT=$((PANE_COUNT + 1))
+    fi
+done < <(tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index}|#{pane_title}|#{pane_current_path}|#{pane_pid}' 2>/dev/null)
 if [ "$PANE_COUNT" -gt 1 ]; then
     CURRENT_SESSION=$(tmux list-panes -a -F '#{session_name} #{pane_current_path}' 2>/dev/null \
         | grep "$CWD" | head -1 | awk '{print $1}')

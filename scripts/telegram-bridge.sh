@@ -230,7 +230,7 @@ inject_to_tmux() {
 }
 
 # ─── 获取活跃 pane 并处理错误（用于特殊命令） ───
-# 成功时设置 _pane 变量，失败时发送错误消息并返回 1
+# 成功时设置 _pane 和 _session 变量，失败时发送错误消息并返回 1
 resolve_pane() {
     _pane=$(get_active_pane)
     local ret=$?
@@ -241,6 +241,7 @@ resolve_pane() {
         send_telegram_reply "$(format_pane_list)"
         return 1
     fi
+    _session="${_pane%%:*}"
     return 0
 }
 
@@ -250,17 +251,17 @@ handle_special() {
         /cancel|/c)
             resolve_pane || return 0
             tmux send-keys -t "$_pane" C-c
-            send_telegram_reply "[已发送] Ctrl+C"
+            send_telegram_reply "[已发送→${_session}] Ctrl+C"
             return 0 ;;
         /escape|/e)
             resolve_pane || return 0
             tmux send-keys -t "$_pane" Escape
-            send_telegram_reply "[已发送] Escape"
+            send_telegram_reply "[已发送→${_session}] Escape"
             return 0 ;;
         /enter)
             resolve_pane || return 0
             tmux send-keys -t "$_pane" Enter
-            send_telegram_reply "[已发送] Enter"
+            send_telegram_reply "[已发送→${_session}] Enter"
             return 0 ;;
         /list|/l)
             send_telegram_reply "$(format_pane_list)"
@@ -404,32 +405,38 @@ handle_update() {
     fi
 
     # 授权选项：用方向键导航（Claude Code 权限对话框是交互式列表选择器）
+    # 从通知脚本保存的实际选项文件中读取标签（fallback 在 case 外设置，避免 bash 3.2 引号 bug）
+    local _perm_file="${HOME}/.claude/telegram-bridge.perm-options.txt"
+    local _opt_label=""
+    _read_opt() { grep "$1" "$_perm_file" 2>/dev/null | head -1 | sed 's/^[[:space:]]*//' | sed "s/^.*$1/$1/"; }
     case "$text" in
         1)
-            resolve_pane && {
-                tmux send-keys -t "$_pane" Enter
-                send_telegram_reply "[已选择] 1. Yes"
-            }
+            resolve_pane || return
+            _opt_label=$(_read_opt '1\.')
+            tmux send-keys -t "$_pane" Enter
+            send_telegram_reply "[已选择→${_session}] ${_opt_label:-1. Yes}"
             return ;;
         2)
-            resolve_pane && {
-                tmux send-keys -t "$_pane" Down
-                tmux send-keys -t "$_pane" Enter
-                send_telegram_reply "[已选择] 2. Yes, don't ask again"
-            }
+            resolve_pane || return
+            _opt_label=$(_read_opt '2\.')
+            tmux send-keys -t "$_pane" Down
+            tmux send-keys -t "$_pane" Enter
+            send_telegram_reply "[已选择→${_session}] ${_opt_label:-2. Always allow}"
             return ;;
         3)
-            resolve_pane && {
-                tmux send-keys -t "$_pane" Down
-                tmux send-keys -t "$_pane" Down
-                tmux send-keys -t "$_pane" Enter
-                send_telegram_reply "[已选择] 3. No"
-            }
+            resolve_pane || return
+            _opt_label=$(_read_opt '3\.')
+            tmux send-keys -t "$_pane" Down
+            tmux send-keys -t "$_pane" Down
+            tmux send-keys -t "$_pane" Enter
+            send_telegram_reply "[已选择→${_session}] ${_opt_label:-3. No}"
             return ;;
     esac
 
+    # 普通文本注入
+    resolve_pane || return
     inject_to_tmux "$text"
-    send_telegram_reply "[已发送] ${text:0:100}"
+    send_telegram_reply "[已发送→${_session}] ${text:0:100}"
 }
 
 # ─── 长轮询主循环 ───

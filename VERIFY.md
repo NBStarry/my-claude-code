@@ -32,9 +32,12 @@
   - 预期效果：Quick Start 有依赖说明、Architecture 包含 bash-syntax-check hook、skills/ 说明清晰
   - 实际效果：（验证后填写）
 
-- [ ] **telegram-bridge /list 进程检测兜底** (commit: dd99df9, date: 2026-02-10)
-  - 验证方法：在多个 tmux session 运行 Claude Code（包括 title 不含 "claude" 的），发送 /list 确认全部被检测到
-  - 预期效果：所有运行 Claude Code 的 pane 都出现在列表中
+- [ ] **telegram-bridge /list 进程检测 + 目标终端显示 + 动态选项标签** (commit: pending, date: 2026-02-10)
+  - 验证方法：
+    1. /list 确认所有 Claude Code 终端（含 title 不含 "claude" 的）都被检测到
+    2. 发送消息确认回复包含目标终端名 `[已发送→session]`
+    3. 权限通知确认显示实际选项（非硬编码），选择后确认回复显示实际选项文本
+  - 预期效果：多终端全部可见，消息明确送达哪个终端，选项标签与实际一致
   - 实际效果：（验证后填写）
 
 ---
