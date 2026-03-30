@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-header" id="logo-link">
+    <h1>&#9881; Claude Code Config</h1>
+    <div class="subtitle">NBStarry's Dashboard</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Overview</div>
+    <div class="nav-item active" data-page="dashboard">
+      <span class="dot dot-blue"></span> Dashboard
+      <span class="badge">home</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Extensions</div>
+    <div class="nav-item" data-page="skills">
+      <span class="dot dot-green"></span> Skills
+      <span class="badge" id="badge-skills">0</span>
+      <span class="nav-chevron" id="skills-chevron">&#9654;</span>
+    </div>
+    <div class="nav-sub" id="skills-sub"></div>
+    <div class="nav-item" data-page="hooks">
+      <span class="dot dot-orange"></span> Hooks
+      <span class="badge" id="badge-hooks">0</span>
+    </div>
+    <div class="nav-item" data-page="configs">
+      <span class="dot dot-cyan"></span> Configs
+      <span class="badge" id="badge-configs">0</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Runtime</div>
+    <div class="nav-item" data-page="memory">
+      <span class="dot dot-red"></span> Memory
+      <span class="badge">&#128274;</span>
+    </div>
+    <div class="nav-item" data-page="verify">
+      <span class="dot dot-yellow"></span> Verification
+      <span class="badge" id="badge-verify">0</span>
+    </div>
+    <div class="nav-item" data-page="scripts">
+      <span class="dot dot-purple"></span> Scripts
+      <span class="badge" id="badge-scripts">0</span>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="status"><span class="online"></span> <span id="footer-branch">dev</span> branch</div>
+    <div id="footer-updated">Last updated: --</div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <input class="search-box" placeholder="Search skills, configs... (Ctrl+K)" readonly />
+    <button class="theme-toggle" id="themeToggle">&#127769;</button>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
