@@ -32,6 +32,11 @@
   - 预期效果：Quick Start 有依赖说明、Architecture 包含 bash-syntax-check hook、skills/ 说明清晰
   - 实际效果：（验证后填写）
 
+- [ ] **generate-site-data.sh 数据生成脚本** (commit: pending, date: 2026-03-30)
+  - 验证方法：运行 `bash scripts/generate-site-data.sh`，检查 `site/data.json` 输出
+  - 预期效果：JSON 包含 skills/hooks/configs/scripts/plugins/verify 数据，stats 统计正确
+  - 实际效果：（验证后填写）
+
 - [ ] **telegram-bridge /list 进程检测 + 目标终端显示 + 动态选项标签** (commit: pending, date: 2026-02-10)
   - 验证方法：
     1. /list 确认所有 Claude Code 终端（含 title 不含 "claude" 的）都被检测到
