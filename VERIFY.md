@@ -42,6 +42,16 @@
   - 预期效果：搜索支持 skills/hooks/configs/scripts，结果按类型分组，最多 10 条，点击可导航
   - 实际效果：（验证后填写）
 
+- [ ] **Memory 页面 Gist 集成 + export-memory.sh** (commit: pending, date: 2026-03-30)
+  - 验证方法：
+    1. 打开 Memory 页面，确认显示 auth gate（锁图标 + 密码输入框 + Unlock 按钮）
+    2. 不输入 token 点击 Unlock，确认提示 "Please enter a token"
+    3. 输入 token 但 MEMORY_GIST_ID 为空，点击 Unlock，确认提示 "MEMORY_GIST_ID not configured"
+    4. `bash -n scripts/export-memory.sh` 通过语法检查
+    5. 设置 MEMORY_GIST_TOKEN 运行 export-memory.sh，确认生成 Gist 并输出 Gist ID
+  - 预期效果：auth gate 正常显示，错误提示准确，脚本语法正确，Gist 上传成功
+  - 实际效果：（验证后填写）
+
 - [ ] **telegram-bridge /list 进程检测 + 目标终端显示 + 动态选项标签** (commit: pending, date: 2026-02-10)
   - 验证方法：
     1. /list 确认所有 Claude Code 终端（含 title 不含 "claude" 的）都被检测到
