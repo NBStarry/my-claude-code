@@ -52,8 +52,9 @@ while IFS= read -r skill_file; do
     source="custom"
   fi
 
-  # 读取正文
-  content=$(get_content_after_frontmatter "$skill_file")
+  # 读取正文到临时文件（避免 --arg 参数列表过长）
+  tmp_content=$(mktemp)
+  get_content_after_frontmatter "$skill_file" > "$tmp_content"
 
   # 累加到 skills_json
   skills_json=$(jq -n \
@@ -63,9 +64,10 @@ while IFS= read -r skill_file; do
     --arg version "$version" \
     --arg source "$source" \
     --arg file "$rel_path" \
-    --arg content "$content" \
+    --rawfile content "$tmp_content" \
     '$arr + [{name: $name, description: $description, version: $version, source: $source, file: $file, content: $content}]'
   )
+  rm -f "$tmp_content"
 
 done < <(find "${REPO_ROOT}/skills" -name "SKILL.md" -not -path "*/examples/*" 2>/dev/null)
 
@@ -80,7 +82,8 @@ while IFS= read -r hook_file; do
   # 提取 events 数组和 description
   events=$(jq -c '[.hooks | keys[]]' "$hook_file" 2>/dev/null || echo '[]')
   description=$(jq -r '.description // ""' "$hook_file" 2>/dev/null || echo "")
-  content=$(cat "$hook_file")
+  tmp_content=$(mktemp)
+  cat "$hook_file" > "$tmp_content"
 
   hooks_json=$(jq -n \
     --argjson arr "$hooks_json" \
@@ -88,9 +91,10 @@ while IFS= read -r hook_file; do
     --arg file "$rel_path" \
     --arg description "$description" \
     --argjson events "$events" \
-    --arg content "$content" \
+    --rawfile content "$tmp_content" \
     '$arr + [{name: $name, file: $file, description: $description, events: $events, content: $content}]'
   )
+  rm -f "$tmp_content"
 
 done < <(find "${REPO_ROOT}/hooks" -name "*.json" -not -path "*/examples/*" 2>/dev/null)
 
@@ -102,15 +106,17 @@ for config_file in "${REPO_ROOT}"/configs/*.json "${REPO_ROOT}"/configs/*.md; do
   [ -f "$config_file" ] || continue
   rel_path="${config_file#${REPO_ROOT}/}"
   filename=$(basename "$config_file")
-  content=$(cat "$config_file")
+  tmp_content=$(mktemp)
+  cat "$config_file" > "$tmp_content"
 
   configs_json=$(jq -n \
     --argjson arr "$configs_json" \
     --arg name "$filename" \
     --arg file "$rel_path" \
-    --arg content "$content" \
+    --rawfile content "$tmp_content" \
     '$arr + [{name: $name, file: $file, content: $content}]'
   )
+  rm -f "$tmp_content"
 done
 
 # ─── Scripts 扫描 ───
