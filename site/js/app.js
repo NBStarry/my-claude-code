@@ -244,7 +244,14 @@
     var counts = getSourceCounts();
     var total = data.skills.length;
 
-    content.appendChild(el('div', { className: 'page-title', textContent: 'Skills' }));
+    // Title row with create button
+    var titleRow = el('div', { className: 'page-title-row' });
+    titleRow.appendChild(el('div', { className: 'page-title', textContent: 'Skills' }));
+    if (typeof Editor !== 'undefined') {
+      var skillTemplate = '---\nname: \ndescription: \nversion: 1.0.0\n---\n\n# Skill Name\n';
+      titleRow.appendChild(Editor.createCreateBtn('skills', skillTemplate, 'my-skill/SKILL.md'));
+    }
+    content.appendChild(titleRow);
     content.appendChild(el('div', { className: 'page-desc' },
       total + ' skills across ' + Object.keys(counts).length + ' collections \u2014 auto-triggered capabilities'));
 
@@ -286,6 +293,12 @@
       if (desc.length > 100) desc = desc.substring(0, 100) + '...';
       row.appendChild(el('span', { className: 'sr-desc', textContent: desc }));
       row.appendChild(el('span', { className: 'sr-version', textContent: skill.version ? 'v' + skill.version : '' }));
+      if (typeof Editor !== 'undefined' && skill.file) {
+        var actions = el('span', { className: 'crud-actions' });
+        actions.appendChild(Editor.createEditBtn(skill.file));
+        actions.appendChild(Editor.createDeleteBtn(skill.file));
+        row.appendChild(actions);
+      }
       listContainer.appendChild(row);
     });
     content.appendChild(listContainer);
@@ -324,6 +337,12 @@
       meta.appendChild(el('span', { textContent: '\uD83C\uDFF7 v' + skill.version }));
     }
     meta.appendChild(el('span', { textContent: '\uD83D\uDCC4 ' + (skill.file || '') }));
+    if (typeof Editor !== 'undefined' && skill.file) {
+      var detailActions = el('span', { className: 'crud-actions' });
+      detailActions.appendChild(Editor.createEditBtn(skill.file));
+      detailActions.appendChild(Editor.createDeleteBtn(skill.file));
+      meta.appendChild(detailActions);
+    }
     header.appendChild(meta);
     detail.appendChild(header);
 
@@ -363,7 +382,13 @@
     var content = document.getElementById('content');
     while (content.firstChild) content.removeChild(content.firstChild);
 
-    content.appendChild(el('div', { className: 'page-title', textContent: 'Hooks' }));
+    var hookTitleRow = el('div', { className: 'page-title-row' });
+    hookTitleRow.appendChild(el('div', { className: 'page-title', textContent: 'Hooks' }));
+    if (typeof Editor !== 'undefined') {
+      var hookTemplate = '{\n  "hooks": {}\n}';
+      hookTitleRow.appendChild(Editor.createCreateBtn('hooks', hookTemplate, 'my-hook.json'));
+    }
+    content.appendChild(hookTitleRow);
     content.appendChild(el('div', { className: 'page-desc' },
       data.hooks.length + ' hook configurations \u2014 event-driven automation'));
 
@@ -386,6 +411,13 @@
       });
 
       header.appendChild(el('span', { className: 'hc-file', textContent: hook.file }));
+
+      if (typeof Editor !== 'undefined' && hook.file) {
+        var hookActions = el('span', { className: 'crud-actions' });
+        hookActions.appendChild(Editor.createEditBtn(hook.file));
+        hookActions.appendChild(Editor.createDeleteBtn(hook.file));
+        header.appendChild(hookActions);
+      }
 
       if (hook.description) {
         header.appendChild(el('div', { className: 'hc-desc', textContent: hook.description }));
@@ -413,7 +445,13 @@
     var content = document.getElementById('content');
     while (content.firstChild) content.removeChild(content.firstChild);
 
-    content.appendChild(el('div', { className: 'page-title', textContent: 'Configs' }));
+    var configTitleRow = el('div', { className: 'page-title-row' });
+    configTitleRow.appendChild(el('div', { className: 'page-title', textContent: 'Configs' }));
+    if (typeof Editor !== 'undefined') {
+      var configTemplate = '{}';
+      configTitleRow.appendChild(Editor.createCreateBtn('configs', configTemplate, 'my-config.json'));
+    }
+    content.appendChild(configTitleRow);
     content.appendChild(el('div', { className: 'page-desc' },
       data.configs.length + ' configuration files'));
 
@@ -423,6 +461,12 @@
       var header = el('div', { className: 'config-card-header' });
       header.appendChild(el('div', { className: 'cc-name', textContent: config.name }));
       header.appendChild(el('div', { className: 'cc-path', textContent: config.file }));
+      if (typeof Editor !== 'undefined' && config.file) {
+        var configActions = el('div', { className: 'crud-actions' });
+        configActions.appendChild(Editor.createEditBtn(config.file));
+        configActions.appendChild(Editor.createDeleteBtn(config.file));
+        header.appendChild(configActions);
+      }
       card.appendChild(header);
 
       // Expandable content

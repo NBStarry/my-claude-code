@@ -1139,3 +1139,355 @@ body {
   padding: 4px 10px;
   color: var(--text-muted);
 }
+
+/* ===== Editor Modal ===== */
+.editor-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editor-container {
+  width: 90%;
+  height: 90%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  flex-shrink: 0;
+}
+
+.editor-path {
+  font-size: 13px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-btn-group {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.editor-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.editor-textarea {
+  width: 50%;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 16px;
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+}
+
+.editor-preview {
+  width: 50%;
+  padding: 16px;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+}
+
+/* ===== Editor Commit Row ===== */
+.editor-commit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.editor-commit-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.editor-commit-input {
+  flex: 1;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+
+.editor-commit-input:focus {
+  border-color: var(--accent);
+}
+
+/* ===== Diff View ===== */
+.diff-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  background: var(--bg-primary);
+}
+
+.diff-added {
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--green);
+  padding: 1px 8px;
+}
+
+.diff-removed {
+  background: rgba(248, 81, 73, 0.15);
+  color: var(--red);
+  padding: 1px 8px;
+}
+
+.diff-same {
+  color: var(--text-muted);
+  padding: 1px 8px;
+}
+
+/* ===== Token Modal ===== */
+.token-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.token-modal-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 480px;
+  width: 90%;
+}
+
+.token-modal-box h3 {
+  font-size: 18px;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.token-modal-box p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.token-modal-input {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  margin-bottom: 12px;
+}
+
+.token-modal-input:focus {
+  border-color: var(--accent);
+}
+
+.token-modal-note {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.token-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* ===== Confirm Modal ===== */
+.confirm-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-modal-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 480px;
+  width: 90%;
+}
+
+.confirm-modal-box h3 {
+  font-size: 18px;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.confirm-modal-box p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+/* ===== Editor Buttons ===== */
+.btn-confirm {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-confirm:hover {
+  opacity: 0.9;
+}
+
+.btn-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-confirm.btn-danger {
+  background: var(--red);
+}
+
+.btn-cancel {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  border-color: var(--accent);
+}
+
+.btn-edit,
+.btn-delete {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  line-height: 1;
+  transition: border-color 0.15s;
+}
+
+.btn-edit:hover {
+  border-color: var(--accent);
+}
+
+.btn-delete:hover {
+  border-color: var(--red);
+}
+
+.btn-create {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.btn-create:hover {
+  opacity: 0.9;
+}
+
+/* ===== CRUD Action Group (inline in rows/cards) ===== */
+.crud-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ===== Page Title Row with Create Button ===== */
+.page-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.page-title-row .page-title {
+  margin-bottom: 0;
+}
+
+/* ===== Toast Notification ===== */
+.editor-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--green-bg);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 300;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: opacity 0.5s;
+}
+
+.editor-toast-fade {
+  opacity: 0;
+}
