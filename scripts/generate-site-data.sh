@@ -7,6 +7,8 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUTPUT="${REPO_ROOT}/site/data.json"
+TMPDIR_DATA=$(mktemp -d)
+trap 'rm -rf "$TMPDIR_DATA"' EXIT
 
 # ─── 辅助函数 ───
 
@@ -31,93 +33,102 @@ json_escape() {
 
 # ─── Skills 扫描 ───
 
-skills_json="[]"
+skills_dir="$TMPDIR_DATA/skills"
+mkdir -p "$skills_dir"
+skill_idx=0
 
 while IFS= read -r skill_file; do
-  # 提取 frontmatter 字段
   name=$(get_frontmatter_field "$skill_file" "name")
   description=$(get_frontmatter_field "$skill_file" "description")
   version=$(get_frontmatter_field "$skill_file" "version")
 
-  # 从路径推断 source
-  # skills/<source>/<name>/SKILL.md -> source = path_parts[1]
-  # skills/<name>/SKILL.md -> source = "custom"
   rel_path="${skill_file#${REPO_ROOT}/}"
-  # Count depth by counting slashes
   slash_count=$(echo "$rel_path" | tr -cd '/' | wc -c | tr -d ' ')
   if [ "$slash_count" -ge 3 ]; then
-    # skills/<source>/<name>/SKILL.md — extract second component
     source=$(echo "$rel_path" | cut -d'/' -f2)
   else
     source="custom"
   fi
 
-  # 读取正文到临时文件（避免 --arg 参数列表过长）
-  tmp_content=$(mktemp)
-  get_content_after_frontmatter "$skill_file" > "$tmp_content"
+  get_content_after_frontmatter "$skill_file" > "$TMPDIR_DATA/tmp_content"
 
-  # 累加到 skills_json
-  skills_json=$(jq -n \
-    --argjson arr "$skills_json" \
+  jq -n \
     --arg name "$name" \
     --arg description "$description" \
     --arg version "$version" \
     --arg source "$source" \
     --arg file "$rel_path" \
-    --rawfile content "$tmp_content" \
-    '$arr + [{name: $name, description: $description, version: $version, source: $source, file: $file, content: $content}]'
-  )
-  rm -f "$tmp_content"
+    --rawfile content "$TMPDIR_DATA/tmp_content" \
+    '{name: $name, description: $description, version: $version, source: $source, file: $file, content: $content}' \
+    > "$skills_dir/$skill_idx.json"
+  skill_idx=$((skill_idx + 1))
 
 done < <(find "${REPO_ROOT}/skills" -name "SKILL.md" -not -path "*/examples/*" 2>/dev/null)
 
+# 合并所有 skill JSON 对象为数组
+if ls "$skills_dir"/*.json >/dev/null 2>&1; then
+  skills_json=$(jq -s '.' "$skills_dir"/*.json)
+else
+  skills_json="[]"
+fi
+
 # ─── Hooks 扫描 ───
 
-hooks_json="[]"
+hooks_dir="$TMPDIR_DATA/hooks"
+mkdir -p "$hooks_dir"
+hook_idx=0
 
 while IFS= read -r hook_file; do
   rel_path="${hook_file#${REPO_ROOT}/}"
   filename=$(basename "$hook_file" .json)
-
-  # 提取 events 数组和 description
   events=$(jq -c '[.hooks | keys[]]' "$hook_file" 2>/dev/null || echo '[]')
   description=$(jq -r '.description // ""' "$hook_file" 2>/dev/null || echo "")
-  tmp_content=$(mktemp)
-  cat "$hook_file" > "$tmp_content"
+  cat "$hook_file" > "$TMPDIR_DATA/tmp_content"
 
-  hooks_json=$(jq -n \
-    --argjson arr "$hooks_json" \
+  jq -n \
     --arg name "$filename" \
     --arg file "$rel_path" \
     --arg description "$description" \
     --argjson events "$events" \
-    --rawfile content "$tmp_content" \
-    '$arr + [{name: $name, file: $file, description: $description, events: $events, content: $content}]'
-  )
-  rm -f "$tmp_content"
+    --rawfile content "$TMPDIR_DATA/tmp_content" \
+    '{name: $name, file: $file, description: $description, events: $events, content: $content}' \
+    > "$hooks_dir/$hook_idx.json"
+  hook_idx=$((hook_idx + 1))
 
 done < <(find "${REPO_ROOT}/hooks" -name "*.json" -not -path "*/examples/*" 2>/dev/null)
 
+if ls "$hooks_dir"/*.json >/dev/null 2>&1; then
+  hooks_json=$(jq -s '.' "$hooks_dir"/*.json)
+else
+  hooks_json="[]"
+fi
+
 # ─── Configs 扫描 ───
 
-configs_json="[]"
+configs_dir="$TMPDIR_DATA/configs"
+mkdir -p "$configs_dir"
+config_idx=0
 
 for config_file in "${REPO_ROOT}"/configs/*.json "${REPO_ROOT}"/configs/*.md; do
   [ -f "$config_file" ] || continue
   rel_path="${config_file#${REPO_ROOT}/}"
   filename=$(basename "$config_file")
-  tmp_content=$(mktemp)
-  cat "$config_file" > "$tmp_content"
+  cat "$config_file" > "$TMPDIR_DATA/tmp_content"
 
-  configs_json=$(jq -n \
-    --argjson arr "$configs_json" \
+  jq -n \
     --arg name "$filename" \
     --arg file "$rel_path" \
-    --rawfile content "$tmp_content" \
-    '$arr + [{name: $name, file: $file, content: $content}]'
-  )
-  rm -f "$tmp_content"
+    --rawfile content "$TMPDIR_DATA/tmp_content" \
+    '{name: $name, file: $file, content: $content}' \
+    > "$configs_dir/$config_idx.json"
+  config_idx=$((config_idx + 1))
 done
+
+if ls "$configs_dir"/*.json >/dev/null 2>&1; then
+  configs_json=$(jq -s '.' "$configs_dir"/*.json)
+else
+  configs_json="[]"
+fi
 
 # ─── Scripts 扫描 ───
 
@@ -325,15 +336,25 @@ generated_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 mkdir -p "${REPO_ROOT}/site"
 
+# 将各数组写入临时文件，避免 --argjson 参数列表过长
+echo "$skills_json" > "$TMPDIR_DATA/skills.json"
+echo "$hooks_json" > "$TMPDIR_DATA/hooks.json"
+echo "$configs_json" > "$TMPDIR_DATA/configs.json"
+echo "$scripts_json" > "$TMPDIR_DATA/scripts.json"
+echo "$plugins_json" > "$TMPDIR_DATA/plugins.json"
+echo "$verify_pending" > "$TMPDIR_DATA/verify_pending.json"
+echo "$verify_verified" > "$TMPDIR_DATA/verify_verified.json"
+echo "$verify_deprecated" > "$TMPDIR_DATA/verify_deprecated.json"
+
 jq -n \
-  --argjson skills "$skills_json" \
-  --argjson hooks "$hooks_json" \
-  --argjson configs "$configs_json" \
-  --argjson scripts "$scripts_json" \
-  --argjson plugins "$plugins_json" \
-  --argjson verify_pending "$verify_pending" \
-  --argjson verify_verified "$verify_verified" \
-  --argjson verify_deprecated "$verify_deprecated" \
+  --slurpfile skills "$TMPDIR_DATA/skills.json" \
+  --slurpfile hooks "$TMPDIR_DATA/hooks.json" \
+  --slurpfile configs "$TMPDIR_DATA/configs.json" \
+  --slurpfile scripts_arr "$TMPDIR_DATA/scripts.json" \
+  --slurpfile plugins "$TMPDIR_DATA/plugins.json" \
+  --slurpfile vp "$TMPDIR_DATA/verify_pending.json" \
+  --slurpfile vv "$TMPDIR_DATA/verify_verified.json" \
+  --slurpfile vd "$TMPDIR_DATA/verify_deprecated.json" \
   --argjson total_skills "$total_skills" \
   --argjson total_hooks "$total_hooks" \
   --argjson total_configs "$total_configs" \
@@ -363,15 +384,15 @@ jq -n \
       commit: $git_commit
     },
     generated_at: $generated_at,
-    skills: $skills,
-    hooks: $hooks,
-    configs: $configs,
-    scripts: $scripts,
-    plugins: $plugins,
+    skills: $skills[0],
+    hooks: $hooks[0],
+    configs: $configs[0],
+    scripts: $scripts_arr[0],
+    plugins: $plugins[0],
     verify: {
-      pending: $verify_pending,
-      verified: $verify_verified,
-      deprecated: $verify_deprecated
+      pending: $vp[0],
+      verified: $vv[0],
+      deprecated: $vd[0]
     }
   }' > "$OUTPUT"
 
