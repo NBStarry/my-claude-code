@@ -10,6 +10,8 @@ A public repository for sharing Claude Code configurations, custom scripts, hook
 
 ## Quick Start
 
+**Prerequisites**: `jq`, `curl`, `tmux` (install via `brew install jq curl tmux` or `apt-get install jq curl tmux`)
+
 ```bash
 # Clone and switch to dev branch
 git clone https://github.com/NBStarry/my-claude-code.git
@@ -18,7 +20,7 @@ cd my-claude-code && git checkout dev
 # Install global CLAUDE.md rules
 cp configs/CLAUDE.md ~/.claude/CLAUDE.md
 
-# Install Telegram notifications (requires: telegram.conf, tmux, jq, curl)
+# Install Telegram notifications
 cp configs/telegram.conf.example ~/.claude/telegram.conf  # edit with your bot token + chat ID
 # Then merge hooks/notification.telegram.json into ~/.claude/settings.json
 
@@ -43,6 +45,10 @@ Both scripts load config from `~/.claude/telegram.conf`. Requires `jq`, `curl`, 
 
 `scripts/statusline.sh` — Custom Claude Code status bar showing `user@host:dir`, model name, Git branch, and context usage percentage. Installed via Claude Code settings.
 
+### Shell Script Safety Hook
+
+`hooks/bash-syntax-check.json` — PreToolUse hook that blocks `git commit` if any staged `.sh` files haven't passed `bash -n` syntax check in the current conversation. This enforces the "syntax check before commit" rule at the tool level.
+
 ### Deprecated
 
 `deprecated/` — Contains retired QQ-based scripts (`notify-qq.sh`, `qq-bridge.sh`, etc.) preserved for reference. Do not modify or extend these files.
@@ -65,7 +71,9 @@ Each content directory follows the same pattern:
 | Configs | `configs/<name>.json` | Claude Code settings files |
 | Plugins | `configs/recommended-plugins.json` | Recommended plugin list with install commands |
 
-### configs/CLAUDE.md
+**Note on skills/**: Contains synced skill collections from official plugins (`superpowers`, `plugin-dev`, `claude-md-management`) plus custom skills like `merge-verified`. See `skills/README.md` for detailed documentation of each skill's trigger conditions and usage.
+
+### Global Rules (configs/CLAUDE.md)
 
 Contains global Claude Code instructions meant to be installed at `~/.claude/CLAUDE.md`. Currently enforces:
 - Code changes and related documentation updates must be in the same commit

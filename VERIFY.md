@@ -27,7 +27,38 @@
   - 实际效果：（验证后填写）
 -->
 
-<!-- 当前无待验证项目 -->
+- [ ] **CLAUDE.md 改进：依赖说明 + bash-syntax-check hook + skills 说明** (commit: pending, date: 2026-02-10)
+  - 验证方法：阅读 CLAUDE.md，确认新增内容准确且有价值
+  - 预期效果：Quick Start 有依赖说明、Architecture 包含 bash-syntax-check hook、skills/ 说明清晰
+  - 实际效果：（验证后填写）
+
+- [ ] **generate-site-data.sh 数据生成脚本** (commit: pending, date: 2026-03-30)
+  - 验证方法：运行 `bash scripts/generate-site-data.sh`，检查 `site/data.json` 输出
+  - 预期效果：JSON 包含 skills/hooks/configs/scripts/plugins/verify 数据，stats 统计正确
+  - 实际效果：（验证后填写）
+
+- [ ] **Dashboard 全局搜索：Ctrl+K 快捷键 + 下拉结果 + 分类导航** (commit: pending, date: 2026-03-30)
+  - 验证方法：打开 Dashboard，按 Ctrl+K 聚焦搜索框，输入关键词确认下拉结果出现，点击结果导航到对应页面，按 Escape 关闭
+  - 预期效果：搜索支持 skills/hooks/configs/scripts，结果按类型分组，最多 10 条，点击可导航
+  - 实际效果：（验证后填写）
+
+- [ ] **Memory 页面 Gist 集成 + export-memory.sh** (commit: pending, date: 2026-03-30)
+  - 验证方法：
+    1. 打开 Memory 页面，确认显示 auth gate（锁图标 + 密码输入框 + Unlock 按钮）
+    2. 不输入 token 点击 Unlock，确认提示 "Please enter a token"
+    3. 输入 token 但 MEMORY_GIST_ID 为空，点击 Unlock，确认提示 "MEMORY_GIST_ID not configured"
+    4. `bash -n scripts/export-memory.sh` 通过语法检查
+    5. 设置 MEMORY_GIST_TOKEN 运行 export-memory.sh，确认生成 Gist 并输出 Gist ID
+  - 预期效果：auth gate 正常显示，错误提示准确，脚本语法正确，Gist 上传成功
+  - 实际效果：（验证后填写）
+
+- [ ] **telegram-bridge /list 进程检测 + 目标终端显示 + 动态选项标签** (commit: pending, date: 2026-02-10)
+  - 验证方法：
+    1. /list 确认所有 Claude Code 终端（含 title 不含 "claude" 的）都被检测到
+    2. 发送消息确认回复包含目标终端名 `[已发送→session]`
+    3. 权限通知确认显示实际选项（非硬编码），选择后确认回复显示实际选项文本
+  - 预期效果：多终端全部可见，消息明确送达哪个终端，选项标签与实际一致
+  - 实际效果：（验证后填写）
 
 ---
 
