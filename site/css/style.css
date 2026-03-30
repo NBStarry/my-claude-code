@@ -208,6 +208,7 @@ body {
 }
 
 .topbar {
+  position: relative;
   height: 52px;
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -242,9 +243,96 @@ body {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 6px 12px;
-  color: var(--text-muted);
+  color: var(--text-primary);
   font-size: 13px;
   width: 240px;
+  outline: none;
+}
+
+.search-box:focus {
+  border-color: var(--accent);
+}
+
+/* ===== Search Dropdown ===== */
+.search-dropdown {
+  position: absolute;
+  top: 52px;
+  right: 60px;
+  width: 400px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.search-group-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-faint);
+  padding: 8px 12px 4px;
+  font-weight: 600;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.search-result-item:hover {
+  background: var(--hover-bg);
+}
+
+.search-result-item .sr-type-badge {
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--badge-bg);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 48px;
+  text-align: center;
+}
+
+.search-result-item .sr-type-badge.type-skill { color: var(--accent); }
+.search-result-item .sr-type-badge.type-hook { color: var(--yellow); }
+.search-result-item .sr-type-badge.type-config { color: var(--purple); }
+.search-result-item .sr-type-badge.type-script { color: var(--green); }
+
+.search-result-item .sr-result-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-result-item .sr-result-desc {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-left: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+  flex-shrink: 0;
+}
+
+.search-no-results {
+  padding: 16px 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 .theme-toggle {

@@ -37,6 +37,11 @@
   - 预期效果：JSON 包含 skills/hooks/configs/scripts/plugins/verify 数据，stats 统计正确
   - 实际效果：（验证后填写）
 
+- [ ] **Dashboard 全局搜索：Ctrl+K 快捷键 + 下拉结果 + 分类导航** (commit: pending, date: 2026-03-30)
+  - 验证方法：打开 Dashboard，按 Ctrl+K 聚焦搜索框，输入关键词确认下拉结果出现，点击结果导航到对应页面，按 Escape 关闭
+  - 预期效果：搜索支持 skills/hooks/configs/scripts，结果按类型分组，最多 10 条，点击可导航
+  - 实际效果：（验证后填写）
+
 - [ ] **telegram-bridge /list 进程检测 + 目标终端显示 + 动态选项标签** (commit: pending, date: 2026-02-10)
   - 验证方法：
     1. /list 确认所有 Claude Code 终端（含 title 不含 "claude" 的）都被检测到

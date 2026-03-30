@@ -6,6 +6,8 @@
   var data = null;
   var currentFilter = 'all';
   var currentVerifyTab = 'pending';
+  var memoryData = null;
+  var MEMORY_GIST_ID = '';
 
   // ===== Theme Toggle =====
   var toggleBtn = document.getElementById('themeToggle');
@@ -451,6 +453,102 @@
   }
 
   // --- Memory ---
+  function fetchMemoryFromGist(token, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://api.github.com/gists/' + MEMORY_GIST_ID);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.setRequestHeader('Accept', 'application/vnd.github+json');
+    xhr.onload = function () {
+      if (xhr.status === 200) {
+        try {
+          var gist = JSON.parse(xhr.responseText);
+          var fileContent = gist.files['memory-data.json'].content;
+          memoryData = JSON.parse(fileContent);
+          callback(null, memoryData);
+        } catch (e) {
+          callback('Failed to parse memory data: ' + e.message);
+        }
+      } else {
+        callback('Gist API returned status ' + xhr.status);
+      }
+    };
+    xhr.onerror = function () {
+      callback('Network error fetching Gist');
+    };
+    xhr.send();
+  }
+
+  function renderMemoryContent(contentEl) {
+    var stats = memoryData.stats || {};
+    var memories = memoryData.memories || [];
+
+    // Stats row
+    var statsGrid = el('div', { className: 'stat-grid' });
+    var typeColors = {
+      feedback: 'color-yellow',
+      project: 'color-accent',
+      reference: 'color-purple',
+      user: 'color-green'
+    };
+    ['feedback', 'project', 'reference', 'user'].forEach(function (type) {
+      var card = el('div', { className: 'stat-card' });
+      card.appendChild(el('div', { className: 'stat-label', textContent: type.charAt(0).toUpperCase() + type.slice(1) }));
+      card.appendChild(el('div', { className: 'stat-value ' + (typeColors[type] || 'color-accent'), textContent: String(stats[type] || 0) }));
+      card.appendChild(el('div', { className: 'stat-sub', textContent: 'memories' }));
+      statsGrid.appendChild(card);
+    });
+    contentEl.appendChild(statsGrid);
+
+    // Table
+    var table = el('div', { className: 'verify-list' });
+    memories.forEach(function (mem) {
+      var item = el('div', { className: 'verify-item' });
+      var header = el('div', { className: 'vi-header' });
+
+      // Type badge
+      var badgeClass = 'event-badge ';
+      if (mem.type === 'feedback') badgeClass += 'event-notification';
+      else if (mem.type === 'project') badgeClass += 'event-pretooluse';
+      else if (mem.type === 'reference') badgeClass += 'event-default';
+      else badgeClass += 'event-stop';
+      header.appendChild(el('span', { className: badgeClass, textContent: mem.type || 'unknown' }));
+
+      header.appendChild(el('span', { className: 'vi-title', textContent: mem.name || '(unnamed)' }));
+      if (mem.file) {
+        header.appendChild(el('span', { className: 'vi-date', textContent: mem.file }));
+      }
+      item.appendChild(header);
+
+      if (mem.description) {
+        var descDiv = el('div', { className: 'vi-detail' });
+        descDiv.appendChild(el('div', { textContent: mem.description }));
+        item.appendChild(descDiv);
+      }
+
+      // Expandable content area
+      var expandDiv = el('div', { className: 'hook-content' });
+      if (mem.content && typeof marked !== 'undefined') {
+        var rendered = document.createElement('div');
+        rendered.className = 'sd-content';
+        rendered.innerHTML = marked.parse(mem.content);
+        expandDiv.appendChild(rendered);
+      } else if (mem.content) {
+        var pre = document.createElement('pre');
+        pre.textContent = mem.content;
+        expandDiv.appendChild(pre);
+      }
+      item.appendChild(expandDiv);
+
+      item.addEventListener('click', function () {
+        expandDiv.classList.toggle('open');
+      });
+      item.style.cursor = 'pointer';
+
+      table.appendChild(item);
+    });
+    contentEl.appendChild(table);
+  }
+
   function renderMemory() {
     var content = document.getElementById('content');
     while (content.firstChild) content.removeChild(content.firstChild);
@@ -459,30 +557,95 @@
     content.appendChild(el('div', { className: 'page-desc' },
       'Persistent cross-session memory \u2014 private data requires authentication'));
 
+    // Check for token in URL param
+    var urlParams = new URLSearchParams(window.location.search);
+    var urlToken = urlParams.get('token');
+    if (urlToken) {
+      sessionStorage.setItem('memory_token', urlToken);
+      // Clean URL
+      var cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState(null, '', cleanUrl);
+    }
+
+    var token = sessionStorage.getItem('memory_token');
+
+    // If we have token and data already loaded, render content
+    if (token && memoryData) {
+      renderMemoryContent(content);
+      return;
+    }
+
+    // If we have token but no data, fetch from Gist
+    if (token && !memoryData) {
+      if (!MEMORY_GIST_ID) {
+        var errMsg = el('div', { className: 'auth-message visible', textContent: 'MEMORY_GIST_ID not configured. Run export-memory.sh first, then set the ID in app.js.' });
+        errMsg.style.display = 'block';
+        errMsg.style.maxWidth = '480px';
+        errMsg.style.margin = '40px auto';
+        content.appendChild(errMsg);
+        sessionStorage.removeItem('memory_token');
+        return;
+      }
+
+      var loading = el('div', { className: 'page-desc', textContent: 'Loading memory data...' });
+      loading.style.textAlign = 'center';
+      loading.style.marginTop = '40px';
+      content.appendChild(loading);
+
+      fetchMemoryFromGist(token, function (err) {
+        if (err) {
+          sessionStorage.removeItem('memory_token');
+          memoryData = null;
+          // Re-render to show auth gate with error
+          renderMemory();
+        } else {
+          renderMemory();
+        }
+      });
+      return;
+    }
+
+    // No token — show auth gate
     var gate = el('div', { className: 'auth-gate' });
     gate.appendChild(el('div', { className: 'lock-icon', textContent: '\uD83D\uDD12' }));
     gate.appendChild(el('h2', { textContent: 'Private Memory Data' }));
 
     var desc = el('p');
-    desc.appendChild(document.createTextNode('Memory data is stored privately.'));
+    desc.appendChild(document.createTextNode('Memory data is stored in a private GitHub Gist.'));
     desc.appendChild(document.createElement('br'));
-    desc.appendChild(document.createTextNode('Enter your access token to view full content.'));
+    desc.appendChild(document.createTextNode('Enter your GitHub token to view full content.'));
     gate.appendChild(desc);
 
     var inputRow = el('div', { className: 'auth-input' });
-    var input = el('input', { type: 'password', placeholder: 'Enter access token...' });
+    var input = el('input', { type: 'password', placeholder: 'Enter GitHub token...' });
     inputRow.appendChild(input);
     var btn = el('button', { className: 'auth-btn', textContent: 'Unlock' });
     inputRow.appendChild(btn);
     gate.appendChild(inputRow);
 
-    var msg = el('div', { className: 'auth-message', textContent: 'MEMORY_GIST_ID not configured yet' });
+    var msg = el('div', { className: 'auth-message' });
     gate.appendChild(msg);
 
-    gate.appendChild(el('p', { className: 'auth-note', textContent: 'Token is only used client-side, never transmitted' }));
+    gate.appendChild(el('p', { className: 'auth-note', textContent: 'Token is stored in sessionStorage only (cleared on tab close)' }));
 
     btn.addEventListener('click', function () {
-      msg.classList.add('visible');
+      var tokenValue = input.value.trim();
+      if (!tokenValue) {
+        msg.textContent = 'Please enter a token';
+        msg.classList.add('visible');
+        return;
+      }
+      if (!MEMORY_GIST_ID) {
+        msg.textContent = 'MEMORY_GIST_ID not configured. Run export-memory.sh first, then set the ID in app.js.';
+        msg.classList.add('visible');
+        return;
+      }
+      sessionStorage.setItem('memory_token', tokenValue);
+      renderMemory();
+    });
+
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') btn.click();
     });
 
     content.appendChild(gate);
@@ -813,6 +976,161 @@
       verifyTab.classList.add('active');
       renderVerifyItems(null);
       return;
+    }
+  });
+
+  // ===== Global Search =====
+  var searchBox = document.getElementById('searchBox');
+
+  function collectSearchResults(query) {
+    var results = [];
+    var q = query.toLowerCase();
+
+    if (data.skills) {
+      data.skills.forEach(function (s) {
+        var name = (s.name || '').toLowerCase();
+        var desc = (s.description || '').toLowerCase();
+        if (name.indexOf(q) !== -1 || desc.indexOf(q) !== -1) {
+          results.push({ type: 'skill', name: s.name, description: s.description || '', hash: '#skill-detail/' + encodeURIComponent(s.name) });
+        }
+      });
+    }
+
+    if (data.hooks) {
+      data.hooks.forEach(function (h) {
+        var name = (h.name || '').toLowerCase();
+        var desc = (h.description || '').toLowerCase();
+        if (name.indexOf(q) !== -1 || desc.indexOf(q) !== -1) {
+          results.push({ type: 'hook', name: h.name, description: h.description || '', hash: '#hooks' });
+        }
+      });
+    }
+
+    if (data.configs) {
+      data.configs.forEach(function (c) {
+        var name = (c.name || '').toLowerCase();
+        if (name.indexOf(q) !== -1) {
+          results.push({ type: 'config', name: c.name, description: '', hash: '#configs' });
+        }
+      });
+    }
+
+    if (data.scripts) {
+      data.scripts.forEach(function (s) {
+        var name = (s.name || '').toLowerCase();
+        var desc = (s.description || '').toLowerCase();
+        if (name.indexOf(q) !== -1 || desc.indexOf(q) !== -1) {
+          results.push({ type: 'script', name: s.name, description: s.description || '', hash: '#scripts' });
+        }
+      });
+    }
+
+    return results.slice(0, 10);
+  }
+
+  function hideSearchResults() {
+    var existing = document.querySelector('.search-dropdown');
+    if (existing) {
+      existing.parentNode.removeChild(existing);
+    }
+  }
+
+  function showSearchResults(query) {
+    hideSearchResults();
+    if (!data || query.length < 2) return;
+
+    var results = collectSearchResults(query);
+    var dropdown = document.createElement('div');
+    dropdown.className = 'search-dropdown';
+
+    if (results.length === 0) {
+      var noResults = document.createElement('div');
+      noResults.className = 'search-no-results';
+      noResults.textContent = 'No results for "' + query + '"';
+      dropdown.appendChild(noResults);
+    } else {
+      // Group by type
+      var groups = {};
+      results.forEach(function (r) {
+        if (!groups[r.type]) groups[r.type] = [];
+        groups[r.type].push(r);
+      });
+
+      var typeOrder = ['skill', 'hook', 'config', 'script'];
+      typeOrder.forEach(function (type) {
+        var items = groups[type];
+        if (!items) return;
+
+        var label = document.createElement('div');
+        label.className = 'search-group-label';
+        label.textContent = type + 's';
+        dropdown.appendChild(label);
+
+        items.forEach(function (item) {
+          var row = document.createElement('div');
+          row.className = 'search-result-item';
+
+          var badge = document.createElement('span');
+          badge.className = 'sr-type-badge type-' + item.type;
+          badge.textContent = item.type;
+          row.appendChild(badge);
+
+          var nameSpan = document.createElement('span');
+          nameSpan.className = 'sr-result-name';
+          nameSpan.textContent = item.name;
+          row.appendChild(nameSpan);
+
+          if (item.description) {
+            var descSpan = document.createElement('span');
+            descSpan.className = 'sr-result-desc';
+            var desc = item.description;
+            if (desc.length > 50) desc = desc.substring(0, 50) + '...';
+            descSpan.textContent = desc;
+            row.appendChild(descSpan);
+          }
+
+          row.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            window.location.hash = item.hash;
+            searchBox.value = '';
+            hideSearchResults();
+            searchBox.blur();
+          });
+
+          dropdown.appendChild(row);
+        });
+      });
+    }
+
+    var topbar = document.querySelector('.topbar');
+    topbar.appendChild(dropdown);
+  }
+
+  searchBox.addEventListener('input', function () {
+    showSearchResults(searchBox.value.trim());
+  });
+
+  searchBox.addEventListener('focus', function () {
+    if (searchBox.value.trim().length >= 2) {
+      showSearchResults(searchBox.value.trim());
+    }
+  });
+
+  searchBox.addEventListener('blur', function () {
+    setTimeout(hideSearchResults, 200);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    // Ctrl+K or Cmd+K
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      searchBox.focus();
+      searchBox.select();
+    }
+    // Escape
+    if (e.key === 'Escape') {
+      searchBox.blur();
+      hideSearchResults();
     }
   });
 
