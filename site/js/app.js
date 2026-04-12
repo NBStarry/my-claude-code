@@ -90,6 +90,7 @@
     document.getElementById('badge-skills').textContent = stats.total_skills;
     document.getElementById('badge-hooks').textContent = stats.total_hooks;
     document.getElementById('badge-configs').textContent = stats.total_configs;
+    document.getElementById('badge-commands').textContent = stats.total_commands || 0;
     document.getElementById('badge-scripts').textContent = stats.total_scripts;
     document.getElementById('badge-verify').textContent = stats.total_pending;
 
@@ -182,6 +183,7 @@
     var cards = [
       { label: 'Skills', value: stats.total_skills, sub: Object.keys(getSourceCounts()).length + ' collections', color: 'color-accent', page: 'skills' },
       { label: 'Verified', value: stats.total_verified, sub: stats.total_pending + ' pending', color: 'color-green', page: 'verify' },
+      { label: 'Commands', value: stats.total_commands || 0, sub: 'slash commands', color: 'color-orange', page: 'commands' },
       { label: 'Scripts', value: stats.total_scripts_lines.toLocaleString(), sub: 'lines of bash', color: 'color-yellow', page: 'scripts' },
       { label: 'Plugins', value: stats.total_plugins, sub: 'recommended', color: 'color-purple', page: null }
     ];
@@ -850,6 +852,68 @@
     });
   }
 
+  // --- Commands ---
+  function renderCommands() {
+    var content = document.getElementById('content');
+    while (content.firstChild) content.removeChild(content.firstChild);
+
+    var commandsTitleRow = el('div', { className: 'page-title-row' });
+    commandsTitleRow.appendChild(el('div', { className: 'page-title', textContent: 'Commands' }));
+    if (typeof Editor !== 'undefined') {
+      var cmdTemplate = '# Command Title\n\nDescription of what this command does.\n\n## Usage\n\n```bash\n# example\n```\n';
+      commandsTitleRow.appendChild(Editor.createCreateBtn('commands', cmdTemplate, 'my-command.md'));
+    }
+    content.appendChild(commandsTitleRow);
+    content.appendChild(el('div', { className: 'page-desc' },
+      (data.commands ? data.commands.length : 0) + ' slash commands synced from ~/.claude/commands/'));
+
+    if (!data.commands || data.commands.length === 0) {
+      content.appendChild(el('div', { className: 'empty-state', textContent: 'No commands found. Run sync-configs.sh push to sync local commands.' }));
+      return;
+    }
+
+    data.commands.forEach(function (cmd) {
+      var card = el('div', { className: 'command-card' });
+
+      var header = el('div', { className: 'cmd-header' });
+      header.appendChild(el('span', { className: 'cmd-name', textContent: '/' + cmd.name }));
+      header.appendChild(el('span', { className: 'cmd-lines', textContent: cmd.lines + ' lines' }));
+      if (typeof Editor !== 'undefined' && cmd.file) {
+        var cmdActions = el('div', { className: 'crud-actions' });
+        cmdActions.appendChild(Editor.createEditBtn(cmd.file));
+        cmdActions.appendChild(Editor.createDeleteBtn(cmd.file));
+        header.appendChild(cmdActions);
+      }
+      card.appendChild(header);
+
+      if (cmd.description) {
+        card.appendChild(el('div', { className: 'cmd-desc', textContent: cmd.description }));
+      }
+
+      // Expandable content
+      if (cmd.content) {
+        var contentDiv = el('div', { className: 'cmd-content collapsed' });
+        contentDiv.appendChild(renderMarkdown(cmd.content));
+        card.appendChild(contentDiv);
+
+        var toggleBtn = el('button', { className: 'config-toggle', textContent: 'Show content' });
+        toggleBtn.addEventListener('click', function () {
+          var isCollapsed = contentDiv.classList.contains('collapsed');
+          if (isCollapsed) {
+            contentDiv.classList.remove('collapsed');
+            toggleBtn.textContent = 'Hide content';
+          } else {
+            contentDiv.classList.add('collapsed');
+            toggleBtn.textContent = 'Show content';
+          }
+        });
+        card.appendChild(toggleBtn);
+      }
+
+      content.appendChild(card);
+    });
+  }
+
   // --- Scripts ---
   function renderScripts() {
     var content = document.getElementById('content');
@@ -934,6 +998,10 @@
       case 'configs':
         updateBreadcrumb('configs');
         renderConfigs();
+        break;
+      case 'commands':
+        updateBreadcrumb('commands');
+        renderCommands();
         break;
       case 'memory':
         updateBreadcrumb('memory');

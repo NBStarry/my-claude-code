@@ -179,6 +179,43 @@ for script_file in "${REPO_ROOT}"/scripts/*.sh; do
   )
 done
 
+# ─── Commands 扫描 ───
+
+commands_dir_data="$TMPDIR_DATA/commands"
+mkdir -p "$commands_dir_data"
+cmd_idx=0
+
+for cmd_file in "${REPO_ROOT}"/commands/*.md; do
+  [ -f "$cmd_file" ] || continue
+  filename=$(basename "$cmd_file")
+  [ "$filename" = "README.md" ] && continue
+
+  rel_path="${cmd_file#${REPO_ROOT}/}"
+  cmd_name="${filename%.md}"
+
+  # 提取第一行标题作为描述
+  description=$(head -1 "$cmd_file" | sed 's/^#[[:space:]]*//')
+  lines=$(wc -l < "$cmd_file")
+
+  cat "$cmd_file" > "$TMPDIR_DATA/tmp_content"
+
+  jq -n \
+    --arg name "$cmd_name" \
+    --arg file "$rel_path" \
+    --arg description "$description" \
+    --argjson lines "$lines" \
+    --rawfile content "$TMPDIR_DATA/tmp_content" \
+    '{name: $name, file: $file, description: $description, lines: $lines, content: $content}' \
+    > "$commands_dir_data/$cmd_idx.json"
+  cmd_idx=$((cmd_idx + 1))
+done
+
+if ls "$commands_dir_data"/*.json >/dev/null 2>&1; then
+  commands_json=$(jq -s '.' "$commands_dir_data"/*.json)
+else
+  commands_json="[]"
+fi
+
 # ─── Plugins 扫描 ───
 
 plugins_json="[]"
@@ -337,6 +374,7 @@ total_hooks=$(echo "$hooks_json" | jq 'length')
 total_configs=$(echo "$configs_json" | jq 'length')
 total_scripts=$(echo "$scripts_json" | jq 'length')
 total_plugins=$(echo "$plugins_json" | jq 'length')
+total_commands=$(echo "$commands_json" | jq 'length')
 total_verified=$(echo "$verify_verified" | jq 'length')
 total_pending=$(echo "$verify_pending" | jq 'length')
 total_deprecated=$(echo "$verify_deprecated" | jq 'length')
@@ -356,6 +394,7 @@ echo "$hooks_json" > "$TMPDIR_DATA/hooks.json"
 echo "$configs_json" > "$TMPDIR_DATA/configs.json"
 echo "$scripts_json" > "$TMPDIR_DATA/scripts.json"
 echo "$plugins_json" > "$TMPDIR_DATA/plugins.json"
+echo "$commands_json" > "$TMPDIR_DATA/commands.json"
 echo "$verify_pending" > "$TMPDIR_DATA/verify_pending.json"
 echo "$verify_verified" > "$TMPDIR_DATA/verify_verified.json"
 echo "$verify_deprecated" > "$TMPDIR_DATA/verify_deprecated.json"
@@ -366,6 +405,7 @@ jq -n \
   --slurpfile configs "$TMPDIR_DATA/configs.json" \
   --slurpfile scripts_arr "$TMPDIR_DATA/scripts.json" \
   --slurpfile plugins "$TMPDIR_DATA/plugins.json" \
+  --slurpfile commands "$TMPDIR_DATA/commands.json" \
   --slurpfile vp "$TMPDIR_DATA/verify_pending.json" \
   --slurpfile vv "$TMPDIR_DATA/verify_verified.json" \
   --slurpfile vd "$TMPDIR_DATA/verify_deprecated.json" \
@@ -374,6 +414,7 @@ jq -n \
   --argjson total_configs "$total_configs" \
   --argjson total_scripts "$total_scripts" \
   --argjson total_plugins "$total_plugins" \
+  --argjson total_commands "$total_commands" \
   --argjson total_scripts_lines "$total_scripts_lines" \
   --argjson total_verified "$total_verified" \
   --argjson total_pending "$total_pending" \
@@ -388,6 +429,7 @@ jq -n \
       total_configs: $total_configs,
       total_scripts: $total_scripts,
       total_plugins: $total_plugins,
+      total_commands: $total_commands,
       total_scripts_lines: $total_scripts_lines,
       total_verified: $total_verified,
       total_pending: $total_pending,
@@ -403,6 +445,7 @@ jq -n \
     configs: $configs[0],
     scripts: $scripts_arr[0],
     plugins: $plugins[0],
+    commands: $commands[0],
     verify: {
       pending: $vp[0],
       verified: $vv[0],
@@ -411,5 +454,5 @@ jq -n \
   }' > "$OUTPUT"
 
 echo "Generated: $OUTPUT"
-echo "Stats: skills=$total_skills hooks=$total_hooks configs=$total_configs scripts=$total_scripts plugins=$total_plugins"
+echo "Stats: skills=$total_skills hooks=$total_hooks configs=$total_configs scripts=$total_scripts commands=$total_commands plugins=$total_plugins"
 echo "Verify: pending=$total_pending verified=$total_verified deprecated=$total_deprecated"
