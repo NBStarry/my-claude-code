@@ -17,12 +17,11 @@ A public repository for sharing Claude Code configurations, custom scripts, hook
 git clone https://github.com/NBStarry/my-claude-code.git
 cd my-claude-code && git checkout dev
 
-# Install global CLAUDE.md rules
-cp configs/CLAUDE.md ~/.claude/CLAUDE.md
+# Sync configs from repo to local (or use push to go the other way)
+bash scripts/sync-configs.sh pull
 
 # Install Telegram notifications
 cp configs/telegram.conf.example ~/.claude/telegram.conf  # edit with your bot token + chat ID
-# Then merge hooks/notification.telegram.json into ~/.claude/settings.json
 
 # Start Telegram bridge daemon (in tmux)
 bash scripts/telegram-bridge.sh &
@@ -44,6 +43,25 @@ Both scripts load config from `~/.claude/telegram.conf`. Requires `jq`, `curl`, 
 ### Status Line
 
 `scripts/statusline.sh` — Custom Claude Code status bar showing `user@host:dir`, model name, Git branch, and context usage percentage. Installed via Claude Code settings.
+
+### Config Sync System
+
+`scripts/sync-configs.sh` — Bidirectional sync between local `~/.claude/` and repo `configs/`. Keeps the GitHub Pages Dashboard in sync with the actual running configuration.
+
+- **push**: Copy local configs to repo (for committing and deploying to Dashboard)
+- **pull**: Copy repo configs to local (with automatic backup to `~/.claude/backups/`)
+- **status**: Show colored sync state comparison
+- **diff**: Show full unified diff between local and repo
+
+Synced files: `CLAUDE.md`, `settings.json`, `settings.local.json`. The Dashboard at GitHub Pages provides browser-based CRUD editing via GitHub Contents API, enabling remote config management from any device.
+
+### Dashboard (GitHub Pages)
+
+`site/` — Single-page web dashboard deployed to GitHub Pages via GitHub Actions. Shows skills, hooks, configs, scripts, plugins, and verification status. Configs page displays metadata tags (model, plugin count, hook events) and supports inline editing via GitHub API with diff preview.
+
+- **Data generation** (`scripts/generate-site-data.sh`): Scans repo directories, extracts metadata, outputs `site/data.json`
+- **CRUD editor** (`site/js/editor.js`): GitHub Contents API integration with token auth, diff preview, and live Markdown preview
+- **Deployment** (`.github/workflows/deploy-dashboard.yml`): Triggers on push to main, runs data generation, deploys to GitHub Pages
 
 ### Shell Script Safety Hook
 

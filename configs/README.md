@@ -1,6 +1,21 @@
 # Configs
 
-Claude Code 配置文件示例。
+Claude Code 配置文件，通过 `scripts/sync-configs.sh` 与本地 `~/.claude/` 保持双向同步。
+
+## Sync / 同步机制
+
+本目录中的配置文件是 `~/.claude/` 下实际运行配置的镜像。通过同步脚本和 Dashboard 实现远程管理：
+
+```bash
+# 查看同步状态
+bash scripts/sync-configs.sh status
+
+# 本地改了配置 → 推到仓库
+bash scripts/sync-configs.sh push
+
+# Dashboard 上编辑了 → 拉到本地
+git pull && bash scripts/sync-configs.sh pull
+```
 
 ## Files / 文件说明
 
@@ -9,15 +24,20 @@ Claude Code 配置文件示例。
 全局配置文件，安装位置：`~/.claude/settings.json`
 
 包含以下设置：
-- **model**: 默认使用的模型
+- **model**: 默认使用的模型（当前：`opus[1m]`）
+- **env**: 环境变量（Agent Teams 开关、代理配置）
+- **permissions**: 全局工具权限白名单
+- **hooks**: 事件钩子（Notification、Stop、UserPromptSubmit）
 - **statusLine**: 自定义状态栏命令
+- **enabledPlugins**: 已启用插件列表（19 个）
+- **extraKnownMarketplaces**: 第三方插件源
+- **effortLevel**: 推理强度
 
 ### settings.local.json
 
-项目级配置文件，安装位置：`<project-root>/.claude/settings.local.json`
+本地权限覆盖文件，安装位置：`~/.claude/settings.local.json`
 
 包含以下设置：
-- **outputStyle**: 输出风格（如 Explanatory）
 - **permissions**: 工具权限预授权列表
 
 ### CLAUDE.md
@@ -52,15 +72,13 @@ Telegram Bot 配置模板，安装位置：`~/.claude/telegram.conf`
 ## Usage / 使用方式
 
 ```bash
-# 全局配置
+# 推荐：使用 sync-configs.sh 一键同步
+bash scripts/sync-configs.sh pull   # 从仓库安装到本地
+bash scripts/sync-configs.sh push   # 从本地推送到仓库
+
+# 或手动安装
 cp settings.json ~/.claude/settings.json
-
-# 全局指令
 cp CLAUDE.md ~/.claude/CLAUDE.md
-
-# 项目级配置（在目标项目根目录下执行）
-mkdir -p .claude
-cp settings.local.json .claude/settings.local.json
 
 # 安装推荐插件（在 Claude Code 中逐个运行）
 /plugin install superpowers@claude-plugins-official
@@ -69,4 +87,4 @@ cp settings.local.json .claude/settings.local.json
 # ... 完整列表见 recommended-plugins.json
 ```
 
-> 注意：请根据你的实际环境修改配置中的路径和参数。
+> 注意：`sync-configs.sh pull` 会自动备份原文件到 `~/.claude/backups/`。

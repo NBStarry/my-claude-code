@@ -248,6 +248,7 @@ Bridge 也可通过 `UserPromptSubmit` hook 自动启动，每次用户提交 pr
 | `/status` | 查看桥接状态（含当前连接、终端数量、Bot 连通性） |
 | `/restart` | 远程重启 bridge 守护进程 |
 | `/log` | 查看最近 10 行日志 |
+| `/compact` | 压缩上下文（发送 /compact 命令到终端） |
 | `/pane` | 截取当前连接终端的显示内容 |
 | `/help` | 显示命令列表 |
 
@@ -268,3 +269,51 @@ Bridge 也可通过 `UserPromptSubmit` hook 自动启动，每次用户提交 pr
 - `OFFSET_FILE` 持久化已处理消息的偏移量，避免重启后重复处理历史消息
 
 > **注意：** 必须在 tmux 中运行 Claude Code，脚本通过 `pane_current_command` 自动检测包含 "claude" 的 pane。
+
+---
+
+## sync-configs.sh
+
+双向同步 `~/.claude/` 本地配置与仓库 `configs/` 目录。配合 GitHub Pages Dashboard 实现远程配置管理。
+
+### Features / 功能
+
+- **push**：本地 → 仓库，覆盖 `configs/` 下的对应文件
+- **pull**：仓库 → 本地，自动备份原文件到 `~/.claude/backups/`
+- **status**：彩色显示同步状态（IN SYNC / OUT OF SYNC / MISSING）
+- **diff**：显示完整 unified diff（本地 vs 仓库）
+
+### Synced Files / 同步文件
+
+| 本地路径 | 仓库路径 | 说明 |
+|----------|----------|------|
+| `~/.claude/CLAUDE.md` | `configs/CLAUDE.md` | 全局指令 |
+| `~/.claude/settings.json` | `configs/settings.json` | 全局设置（hooks、plugins、model） |
+| `~/.claude/settings.local.json` | `configs/settings.local.json` | 本地权限覆盖 |
+
+### Usage / 使用方式
+
+```bash
+# 查看同步状态
+bash scripts/sync-configs.sh status
+
+# 推送本地配置到仓库
+bash scripts/sync-configs.sh push
+
+# 从仓库拉取配置到本地
+bash scripts/sync-configs.sh pull
+
+# 查看完整差异
+bash scripts/sync-configs.sh diff
+```
+
+### Workflow / 工作流
+
+```
+本地修改配置 → sync-configs.sh push → git commit + push → GitHub Actions 部署 → Dashboard 可见
+Dashboard 编辑 → GitHub API 提交 → git pull → sync-configs.sh pull → 本地生效
+```
+
+### Dependencies / 依赖
+
+- `diff` — 文件比较（macOS/Linux 自带）
