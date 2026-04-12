@@ -10,7 +10,7 @@ A public repository for sharing Claude Code configurations, custom scripts, hook
 
 ## Quick Start
 
-**Prerequisites**: `jq`, `curl`, `tmux` (install via `brew install jq curl tmux` or `apt-get install jq curl tmux`)
+**Prerequisites**: `jq` (install via `brew install jq` or `apt-get install jq`)
 
 ```bash
 # Clone and switch to dev branch
@@ -19,26 +19,9 @@ cd my-claude-code && git checkout dev
 
 # Sync configs from repo to local (or use push to go the other way)
 bash scripts/sync-configs.sh pull
-
-# Install Telegram notifications
-cp configs/telegram.conf.example ~/.claude/telegram.conf  # edit with your bot token + chat ID
-
-# Start Telegram bridge daemon (in tmux)
-bash scripts/telegram-bridge.sh &
 ```
 
 ## Architecture
-
-### Bidirectional Communication System (Telegram)
-
-The most complex feature spans `scripts/` and `hooks/`:
-
-- **Outbound** (`scripts/notify-telegram.sh`): Hook-triggered script that sends formatted notifications via Telegram Bot API
-- **Inbound** (`scripts/telegram-bridge.sh`): Long-polling daemon that fetches Telegram messages and injects them into Claude Code's tmux pane via `tmux send-keys`. Supports multi-pane routing — detects all Claude Code instances across tmux sessions, with `/list` and `/connect <session>` commands for switching
-- **Hook wiring** (`hooks/notification.telegram.json`): Connects `Notification` (permission_prompt, idle_prompt) and `Stop` events to `notify-telegram.sh`
-- **Config** (`configs/telegram.conf.example`): Shared configuration for bot token and chat ID
-
-Both scripts load config from `~/.claude/telegram.conf`. Requires `jq`, `curl`, and `tmux`. QQ variant has been deprecated to `deprecated/`.
 
 ### Status Line
 
