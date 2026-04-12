@@ -1,4 +1,18 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "https_proxy": "http://127.0.0.1:7897",
+    "http_proxy": "http://127.0.0.1:7897",
+    "all_proxy": "socks5://127.0.0.1:7897"
+  },
+  "permissions": {
+    "allow": [
+      "mcp__plugin_telegram_telegram__reply",
+      "mcp__plugin_telegram_telegram__react",
+      "mcp__plugin_telegram_telegram__edit_message"
+    ]
+  },
+  "model": "opus[1m]",
   "hooks": {
     "Notification": [
       {
@@ -44,5 +58,60 @@
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline.sh"
-  }
+  },
+  "enabledPlugins": {
+    "code-review@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "planning-with-files@planning-with-files": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "document-skills@anthropic-agent-skills": true,
+    "telegram@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "pua@pua-skills": true,
+    "claude-mem@thedotmack": true
+  },
+  "extraKnownMarketplaces": {
+    "planning-with-files": {
+      "source": {
+        "source": "github",
+        "repo": "OthmanAdi/planning-with-files"
+      }
+    },
+    "ui-ux-pro-max-skill": {
+      "source": {
+        "source": "github",
+        "repo": "nextlevelbuilder/ui-ux-pro-max-skill"
+      }
+    },
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
+    },
+    "pua-skills": {
+      "source": {
+        "source": "github",
+        "repo": "tanweai/pua"
+      }
+    },
+    "thedotmack": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
+      }
+    }
+  },
+  "effortLevel": "medium",
+  "skipDangerousModePermissionPrompt": true
 }
