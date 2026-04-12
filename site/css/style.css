@@ -1,5 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 /* ===== Reset ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===== Focus States ===== */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 
 /* ===== Theme System ===== */
 :root {
@@ -48,13 +61,24 @@
 
 /* ===== Body ===== */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   transition: background 0.3s, color 0.3s;
 }
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+.content { scrollbar-gutter: stable; }
 
 /* ===== Sidebar ===== */
 .sidebar {
@@ -360,6 +384,7 @@ body {
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 8px;
+  letter-spacing: -0.02em;
 }
 
 .page-desc {
@@ -377,7 +402,7 @@ body {
 /* ===== Dashboard Stat Cards ===== */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   margin-bottom: 32px;
 }
@@ -388,11 +413,13 @@ body {
   border-radius: 8px;
   padding: 20px;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .stat-card:hover {
   border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .stat-card .stat-label {
@@ -589,7 +616,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 16px;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.8;
   margin-bottom: 20px;
@@ -690,11 +717,13 @@ body {
   border-radius: 8px;
   margin-bottom: 16px;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .hook-card:hover {
   border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .hook-card-header {
@@ -776,7 +805,7 @@ body {
   color: var(--text-secondary);
   overflow-x: auto;
   line-height: 1.6;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 /* ===== Configs ===== */
@@ -786,11 +815,13 @@ body {
   border-radius: 8px;
   margin-bottom: 16px;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .config-card:hover {
   border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .config-card-header {
@@ -875,7 +906,7 @@ body {
   color: var(--text-secondary);
   overflow-x: auto;
   line-height: 1.6;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 .config-content .sd-content {
@@ -1101,11 +1132,13 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
   margin-bottom: 16px;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .command-card:hover {
   border-color: var(--orange);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .cmd-header {
@@ -1119,7 +1152,7 @@ body {
   font-size: 16px;
   font-weight: 600;
   color: var(--orange);
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 .cmd-lines {
@@ -1209,6 +1242,13 @@ body {
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 16px;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.plugin-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .plugin-card .pc-header {
@@ -1238,7 +1278,7 @@ body {
 
 .plugin-card .pc-install {
   font-size: 12px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -1283,7 +1323,7 @@ body {
 
 .editor-path {
   font-size: 13px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1308,7 +1348,7 @@ body {
   border-right: 1px solid var(--border);
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.6;
   padding: 16px;
@@ -1360,7 +1400,7 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.6;
   background: var(--bg-primary);
@@ -1527,19 +1567,26 @@ body {
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 12px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 500;
   cursor: pointer;
   line-height: 1;
-  transition: border-color 0.15s;
+  transition: all 0.15s;
+  color: var(--text-muted);
+  font-family: 'Inter', -apple-system, sans-serif;
 }
 
 .btn-edit:hover {
   border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(88, 166, 255, 0.08);
 }
 
 .btn-delete:hover {
   border-color: var(--red);
+  color: var(--red);
+  background: rgba(248, 81, 73, 0.08);
 }
 
 .btn-create {
@@ -1596,4 +1643,63 @@ body {
 
 .editor-toast-fade {
   opacity: 0;
+}
+
+/* ===== Page Transitions ===== */
+.content > * {
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .sidebar-header { padding: 12px 16px; border-bottom: none; }
+  .sidebar-header h1 { font-size: 14px; }
+  .sidebar-header .subtitle { display: none; }
+  .nav-section { display: flex; padding: 0; gap: 0; }
+  .nav-section-title { display: none; }
+  .nav-item {
+    padding: 10px 14px;
+    white-space: nowrap;
+    border-right: none;
+    font-size: 13px;
+  }
+  .nav-item.active { border-right: none; border-bottom: 2px solid var(--accent); }
+  .nav-item .badge { display: none; }
+  .sidebar-footer { display: none; }
+  .content { padding: 20px 16px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .skill-row { flex-wrap: wrap; gap: 8px; }
+  .skill-row .sr-desc { min-width: 100%; order: 99; }
+  .topbar { padding: 0 16px; }
+  .search-box { width: 160px; }
+  .search-dropdown { width: calc(100vw - 32px); right: 16px; }
+  .editor-container { width: 100%; height: 100%; border-radius: 0; }
+  .editor-body { flex-direction: column; }
+  .editor-textarea, .editor-preview { width: 100%; height: 50%; }
+}
+
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: 1fr; }
+  .topbar .search-box { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
