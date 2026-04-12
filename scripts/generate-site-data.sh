@@ -115,11 +115,25 @@ for config_file in "${REPO_ROOT}"/configs/*.json "${REPO_ROOT}"/configs/*.md; do
   filename=$(basename "$config_file")
   cat "$config_file" > "$TMPDIR_DATA/tmp_content"
 
+  # 提取 JSON 配置文件的元数据摘要
+  config_meta="{}"
+  if [[ "$filename" == *.json ]] && jq empty "$config_file" 2>/dev/null; then
+    config_meta=$(jq -c '{
+      keys: [keys[] | select(. != null)] | length,
+      has_hooks: (has("hooks") // false),
+      has_plugins: (has("enabledPlugins") // false),
+      model: (.model // null),
+      plugin_count: (if .enabledPlugins then (.enabledPlugins | keys | length) else 0 end),
+      hook_event_count: (if .hooks then (.hooks | keys | length) else 0 end)
+    }' "$config_file" 2>/dev/null || echo '{}')
+  fi
+
   jq -n \
     --arg name "$filename" \
     --arg file "$rel_path" \
+    --argjson meta "$config_meta" \
     --rawfile content "$TMPDIR_DATA/tmp_content" \
-    '{name: $name, file: $file, content: $content}' \
+    '{name: $name, file: $file, meta: $meta, content: $content}' \
     > "$configs_dir/$config_idx.json"
   config_idx=$((config_idx + 1))
 done

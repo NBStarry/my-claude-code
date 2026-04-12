@@ -1,11 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(chmod:*)",
-      "Bash(jq:*)",
-      "Bash(brew install:*)",
-      "Bash(bash:*)"
+      "Skill(update-config)"
     ]
-  },
-  "outputStyle": "Explanatory"
+  }
 }

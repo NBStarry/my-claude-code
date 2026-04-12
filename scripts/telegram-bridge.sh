@@ -263,6 +263,12 @@ handle_special() {
             tmux send-keys -t "$_pane" Enter
             send_telegram_reply "[已发送→${_session}] Enter"
             return 0 ;;
+        /compact)
+            resolve_pane || return 0
+            tmux send-keys -t "$_pane" -l "/compact"
+            tmux send-keys -t "$_pane" Enter
+            send_telegram_reply "[已发送→${_session}] /compact"
+            return 0 ;;
         /list|/l)
             send_telegram_reply "$(format_pane_list)"
             return 0 ;;
@@ -329,6 +335,7 @@ ${pane_info}
 /status - 查看桥接状态
 /restart - 重启 bridge
 /log - 查看最近日志
+/compact - 压缩上下文
 /pane - 截取终端内容
 /full - 发送完整终端内容（文件）
 /help - 显示此帮助

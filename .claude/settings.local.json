@@ -35,7 +35,13 @@
       "Bash(python3:*)",
       "Bash(ruby -e:*)",
       "Bash(git -C /Users/hanzebei/Documents/AI_Projects/my-claude-code diff scripts/notify-telegram.sh)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(bash:*)",
+      "Bash(RESULT=$?)",
+      "Bash(exit $RESULT)",
+      "Bash(echo:*)",
+      "Bash(export ALL_PROXY=\"http://127.0.0.1:7897\")",
+      "Bash(wc:*)"
     ]
   },
   "outputStyle": "Explanatory",

@@ -808,14 +808,61 @@ body {
   margin-top: 4px;
 }
 
+.config-meta {
+  padding: 4px 20px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.config-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  background: var(--badge-bg);
+  color: var(--text-muted);
+}
+
+.config-tag.tag-model {
+  background: rgba(88, 166, 255, 0.15);
+  color: var(--accent);
+}
+
+.config-tag.tag-plugins {
+  background: rgba(188, 140, 255, 0.15);
+  color: var(--purple);
+}
+
+.config-tag.tag-hooks {
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--green);
+}
+
 .config-content {
-  display: none;
   border-top: 1px solid var(--border-light);
   padding: 16px 20px;
 }
 
-.config-content.open {
+.config-content.collapsed {
+  display: none;
+}
+
+.config-toggle {
   display: block;
+  width: 100%;
+  padding: 8px;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border-light);
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.config-toggle:hover {
+  color: var(--accent);
 }
 
 .config-content pre {

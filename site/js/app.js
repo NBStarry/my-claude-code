@@ -469,8 +469,24 @@
       }
       card.appendChild(header);
 
+      // Meta tags for JSON configs
+      if (config.meta && config.meta.keys) {
+        var metaRow = el('div', { className: 'config-meta' });
+        if (config.meta.model) {
+          metaRow.appendChild(el('span', { className: 'config-tag tag-model', textContent: config.meta.model }));
+        }
+        if (config.meta.plugin_count > 0) {
+          metaRow.appendChild(el('span', { className: 'config-tag tag-plugins', textContent: config.meta.plugin_count + ' plugins' }));
+        }
+        if (config.meta.hook_event_count > 0) {
+          metaRow.appendChild(el('span', { className: 'config-tag tag-hooks', textContent: config.meta.hook_event_count + ' hook events' }));
+        }
+        metaRow.appendChild(el('span', { className: 'config-tag', textContent: config.meta.keys + ' top-level keys' }));
+        card.appendChild(metaRow);
+      }
+
       // Expandable content
-      var contentDiv = el('div', { className: 'config-content' });
+      var contentDiv = el('div', { className: 'config-content collapsed' });
       var isMd = config.file && config.file.endsWith('.md');
       var isJson = config.file && config.file.endsWith('.json');
 
@@ -492,6 +508,21 @@
         contentDiv.appendChild(pre);
       }
       card.appendChild(contentDiv);
+
+      // Toggle expand/collapse
+      var toggleBtn = el('button', { className: 'config-toggle', textContent: 'Show content' });
+      toggleBtn.addEventListener('click', function () {
+        var isCollapsed = contentDiv.classList.contains('collapsed');
+        if (isCollapsed) {
+          contentDiv.classList.remove('collapsed');
+          toggleBtn.textContent = 'Hide content';
+        } else {
+          contentDiv.classList.add('collapsed');
+          toggleBtn.textContent = 'Show content';
+        }
+      });
+      card.appendChild(toggleBtn);
+
       content.appendChild(card);
     });
   }

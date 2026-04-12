@@ -27,6 +27,16 @@
   - 实际效果：（验证后填写）
 -->
 
+- [ ] **本地配置同步：sync-configs.sh + Dashboard Configs 增强** (commit: pending, date: 2026-04-12)
+  - 验证方法：1) `bash scripts/sync-configs.sh status` 查看同步状态 2) `bash scripts/sync-configs.sh push` 推送后查看 `git diff configs/` 3) 访问 Dashboard Configs 页面查看元数据标签和折叠展开
+  - 预期效果：sync-configs.sh 正确识别本地/仓库差异，push/pull 双向同步，Dashboard 显示 model、plugin 数量、hook events 等标签
+  - 实际效果：（验证后填写）
+
+- [ ] **Telegram bridge /compact 命令** (commit: pending, date: 2026-04-12)
+  - 验证方法：在 Telegram 中发送 /compact，确认 Claude Code 收到并执行
+  - 预期效果：/compact 命令通过 tmux send-keys 发送到当前活跃 pane
+  - 实际效果：（验证后填写）
+
 - [ ] **CLAUDE.md 改进：依赖说明 + bash-syntax-check hook + skills 说明** (commit: pending, date: 2026-02-10)
   - 验证方法：阅读 CLAUDE.md，确认新增内容准确且有价值
   - 预期效果：Quick Start 有依赖说明、Architecture 包含 bash-syntax-check hook、skills/ 说明清晰
