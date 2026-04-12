@@ -1,12 +1,14 @@
 #!/bin/bash
 # Generate Site Data for Dashboard
-# 扫描仓库中的 skills、hooks、configs、scripts、plugins、VERIFY.md
+# 扫描仓库 + 本地 ~/.claude/ 的 skills、hooks、configs、scripts、commands、plugins
 # 输出统一的 JSON 数据到 site/data.json，供前端 Dashboard 使用
+# 本地运行时自动包含插件 skills；CI 环境只扫仓库
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUTPUT="${REPO_ROOT}/site/data.json"
+CLAUDE_HOME="${HOME}/.claude"
 TMPDIR_DATA=$(mktemp -d)
 trap 'rm -rf "$TMPDIR_DATA"' EXIT
 
@@ -32,23 +34,30 @@ json_escape() {
 }
 
 # ─── Skills 扫描 ───
+# 扫描三个来源：仓库 skills/、本地 ~/.claude/skills/、已安装插件 skills
 
 skills_dir="$TMPDIR_DATA/skills"
 mkdir -p "$skills_dir"
 skill_idx=0
+seen_skills_file="$TMPDIR_DATA/seen_skills.txt"
+touch "$seen_skills_file"
 
-while IFS= read -r skill_file; do
+scan_skill() {
+  local skill_file="$1"
+  local source_label="$2"
+  local display_path="$3"
+
+  local name description version
   name=$(get_frontmatter_field "$skill_file" "name")
+  [ -z "$name" ] && return
   description=$(get_frontmatter_field "$skill_file" "description")
   version=$(get_frontmatter_field "$skill_file" "version")
 
-  rel_path="${skill_file#${REPO_ROOT}/}"
-  slash_count=$(echo "$rel_path" | tr -cd '/' | wc -c | tr -d ' ')
-  if [ "$slash_count" -ge 3 ]; then
-    source=$(echo "$rel_path" | cut -d'/' -f2)
-  else
-    source="custom"
+  # 去重：同名 skill 只保留第一个
+  if grep -qFx "$name" "$seen_skills_file" 2>/dev/null; then
+    return
   fi
+  echo "$name" >> "$seen_skills_file"
 
   get_content_after_frontmatter "$skill_file" > "$TMPDIR_DATA/tmp_content"
 
@@ -56,14 +65,50 @@ while IFS= read -r skill_file; do
     --arg name "$name" \
     --arg description "$description" \
     --arg version "$version" \
-    --arg source "$source" \
-    --arg file "$rel_path" \
+    --arg source "$source_label" \
+    --arg file "$display_path" \
     --rawfile content "$TMPDIR_DATA/tmp_content" \
     '{name: $name, description: $description, version: $version, source: $source, file: $file, content: $content}' \
     > "$skills_dir/$skill_idx.json"
   skill_idx=$((skill_idx + 1))
+}
 
+# 1) 本地自定义 skills (~/.claude/skills/)
+if [ -d "${CLAUDE_HOME}/skills" ]; then
+  while IFS= read -r skill_file; do
+    local_name=$(get_frontmatter_field "$skill_file" "name")
+    scan_skill "$skill_file" "local" "~/.claude/skills/${local_name}/SKILL.md"
+  done < <(find -L "${CLAUDE_HOME}/skills" -name "SKILL.md" 2>/dev/null)
+fi
+
+# 2) 仓库 skills/
+while IFS= read -r skill_file; do
+  rel_path="${skill_file#${REPO_ROOT}/}"
+  slash_count=$(echo "$rel_path" | tr -cd '/' | wc -c | tr -d ' ')
+  if [ "$slash_count" -ge 3 ]; then
+    source_label=$(echo "$rel_path" | cut -d'/' -f2)
+  else
+    source_label="custom"
+  fi
+  scan_skill "$skill_file" "$source_label" "$rel_path"
 done < <(find "${REPO_ROOT}/skills" -name "SKILL.md" -not -path "*/examples/*" 2>/dev/null)
+
+# 3) 已安装插件 skills (~/.claude/plugins/marketplaces/*)
+# 只扫 Claude Code 标准路径下的 skills/ 目录，避免 .cursor/.gemini 等副本
+if [ -d "${CLAUDE_HOME}/plugins/marketplaces" ]; then
+  while IFS= read -r skill_file; do
+    # 跳过非 Claude Code 标准路径（.cursor, .gemini, .codex 等）
+    if echo "$skill_file" | grep -qE '/\.(cursor|gemini|codex|mastracode|continue|opencode|factory|codebuddy|pi)/'; then
+      continue
+    fi
+
+    # 从路径提取插件名: marketplaces/<marketplace>/<...>/skills/<name>/SKILL.md
+    mp_rel="${skill_file#${CLAUDE_HOME}/plugins/marketplaces/}"
+    marketplace_name=$(echo "$mp_rel" | cut -d'/' -f1)
+
+    scan_skill "$skill_file" "$marketplace_name" "plugin: $mp_rel"
+  done < <(find "${CLAUDE_HOME}/plugins/marketplaces" -name "SKILL.md" -not -path "*/examples/*" -not -path "*/template/*" 2>/dev/null)
+fi
 
 # 合并所有 skill JSON 对象为数组
 if ls "$skills_dir"/*.json >/dev/null 2>&1; then

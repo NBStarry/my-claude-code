@@ -23,8 +23,14 @@ jobs:
       - name: Install jq
         run: which jq || sudo apt-get install -y jq
 
-      - name: Generate site data
-        run: bash scripts/generate-site-data.sh
+      - name: Generate site data (fallback if not pre-generated locally)
+        run: |
+          if [ -f site/data.json ]; then
+            echo "Using pre-generated data.json (from local sync-configs.sh push)"
+          else
+            echo "No pre-generated data.json, generating from repo only"
+            bash scripts/generate-site-data.sh
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
