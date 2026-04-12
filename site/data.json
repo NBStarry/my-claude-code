@@ -1,21 +1,21 @@
 {
   "stats": {
     "total_skills": 100,
-    "total_hooks": 2,
+    "total_hooks": 1,
     "total_configs": 5,
-    "total_scripts": 4,
+    "total_scripts": 2,
     "total_plugins": 10,
     "total_commands": 2,
-    "total_scripts_lines": 1420,
+    "total_scripts_lines": 435,
     "total_verified": 15,
     "total_pending": 7,
     "total_deprecated": 5
   },
   "git": {
     "branch": "dev",
-    "commit": "23e76e5"
+    "commit": "c858690"
   },
-  "generated_at": "2026-04-12T08:10:27Z",
+  "generated_at": "2026-04-12T08:18:43Z",
   "skills": [
     {
       "name": "lark-mail",
@@ -820,16 +820,6 @@
   ],
   "hooks": [
     {
-      "name": "notification.telegram",
-      "file": "hooks/notification.telegram.json",
-      "description": "Telegram 消息通知 — 通过 Telegram Bot API 发送格式化通知到手机",
-      "events": [
-        "Notification",
-        "Stop"
-      ],
-      "content": "{\n  \"description\": \"Telegram 消息通知 — 通过 Telegram Bot API 发送格式化通知到手机\",\n  \"hooks\": {\n    \"Notification\": [\n      {\n        \"matcher\": \"permission_prompt\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash ~/.claude/notify-telegram.sh permission_prompt\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"idle_prompt\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash ~/.claude/notify-telegram.sh idle_prompt\"\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash ~/.claude/notify-telegram.sh stop\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
-    },
-    {
       "name": "bash-syntax-check",
       "file": "hooks/bash-syntax-check.json",
       "description": "",
@@ -857,14 +847,14 @@
       "name": "settings.json",
       "file": "configs/settings.json",
       "meta": {
-        "keys": 9,
-        "has_hooks": true,
+        "keys": 8,
+        "has_hooks": false,
         "has_plugins": true,
         "model": "opus[1m]",
-        "plugin_count": 19,
-        "hook_event_count": 3
+        "plugin_count": 18,
+        "hook_event_count": 0
       },
-      "content": "{\n  \"env\": {\n    \"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS\": \"1\",\n    \"https_proxy\": \"http://127.0.0.1:7897\",\n    \"http_proxy\": \"http://127.0.0.1:7897\",\n    \"all_proxy\": \"socks5://127.0.0.1:7897\"\n  },\n  \"permissions\": {\n    \"allow\": [\n      \"mcp__plugin_telegram_telegram__reply\",\n      \"mcp__plugin_telegram_telegram__react\",\n      \"mcp__plugin_telegram_telegram__edit_message\"\n    ]\n  },\n  \"model\": \"opus[1m]\",\n  \"hooks\": {\n    \"Notification\": [\n      {\n        \"matcher\": \"permission_prompt\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash ~/.claude/notify-telegram.sh permission_prompt\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"idle_prompt\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash ~/.claude/notify-telegram.sh idle_prompt\"\n          }\n        ]\n      }\n    ],\n    \"UserPromptSubmit\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash ~/.claude/telegram-bridge.sh ensure\"\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash ~/.claude/notify-telegram.sh stop\"\n          }\n        ]\n      }\n    ]\n  },\n  \"statusLine\": {\n    \"type\": \"command\",\n    \"command\": \"bash ~/.claude/statusline.sh\"\n  },\n  \"enabledPlugins\": {\n    \"code-review@claude-plugins-official\": true,\n    \"github@claude-plugins-official\": true,\n    \"feature-dev@claude-plugins-official\": true,\n    \"code-simplifier@claude-plugins-official\": true,\n    \"superpowers@claude-plugins-official\": true,\n    \"commit-commands@claude-plugins-official\": true,\n    \"pyright-lsp@claude-plugins-official\": true,\n    \"security-guidance@claude-plugins-official\": true,\n    \"plugin-dev@claude-plugins-official\": true,\n    \"claude-md-management@claude-plugins-official\": true,\n    \"ralph-loop@claude-plugins-official\": true,\n    \"planning-with-files@planning-with-files\": true,\n    \"ui-ux-pro-max@ui-ux-pro-max-skill\": true,\n    \"document-skills@anthropic-agent-skills\": true,\n    \"telegram@claude-plugins-official\": true,\n    \"frontend-design@claude-plugins-official\": true,\n    \"skill-creator@claude-plugins-official\": true,\n    \"pua@pua-skills\": true,\n    \"claude-mem@thedotmack\": true\n  },\n  \"extraKnownMarketplaces\": {\n    \"planning-with-files\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"OthmanAdi/planning-with-files\"\n      }\n    },\n    \"ui-ux-pro-max-skill\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"nextlevelbuilder/ui-ux-pro-max-skill\"\n      }\n    },\n    \"anthropic-agent-skills\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"anthropics/skills\"\n      }\n    },\n    \"pua-skills\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"tanweai/pua\"\n      }\n    },\n    \"thedotmack\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"thedotmack/claude-mem\"\n      }\n    }\n  },\n  \"effortLevel\": \"medium\",\n  \"skipDangerousModePermissionPrompt\": true\n}\n"
+      "content": "{\n  \"env\": {\n    \"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS\": \"1\",\n    \"https_proxy\": \"http://127.0.0.1:7897\",\n    \"http_proxy\": \"http://127.0.0.1:7897\",\n    \"all_proxy\": \"socks5://127.0.0.1:7897\"\n  },\n  \"permissions\": {\n    \"allow\": []\n  },\n  \"model\": \"opus[1m]\",\n  \"statusLine\": {\n    \"type\": \"command\",\n    \"command\": \"bash ~/.claude/statusline.sh\"\n  },\n  \"enabledPlugins\": {\n    \"code-review@claude-plugins-official\": true,\n    \"github@claude-plugins-official\": true,\n    \"feature-dev@claude-plugins-official\": true,\n    \"code-simplifier@claude-plugins-official\": true,\n    \"superpowers@claude-plugins-official\": true,\n    \"commit-commands@claude-plugins-official\": true,\n    \"pyright-lsp@claude-plugins-official\": true,\n    \"security-guidance@claude-plugins-official\": true,\n    \"plugin-dev@claude-plugins-official\": true,\n    \"claude-md-management@claude-plugins-official\": true,\n    \"ralph-loop@claude-plugins-official\": true,\n    \"planning-with-files@planning-with-files\": true,\n    \"ui-ux-pro-max@ui-ux-pro-max-skill\": true,\n    \"document-skills@anthropic-agent-skills\": true,\n    \"frontend-design@claude-plugins-official\": true,\n    \"skill-creator@claude-plugins-official\": true,\n    \"pua@pua-skills\": true,\n    \"claude-mem@thedotmack\": true\n  },\n  \"extraKnownMarketplaces\": {\n    \"planning-with-files\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"OthmanAdi/planning-with-files\"\n      }\n    },\n    \"ui-ux-pro-max-skill\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"nextlevelbuilder/ui-ux-pro-max-skill\"\n      }\n    },\n    \"anthropic-agent-skills\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"anthropics/skills\"\n      }\n    },\n    \"pua-skills\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"tanweai/pua\"\n      }\n    },\n    \"thedotmack\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"thedotmack/claude-mem\"\n      }\n    }\n  },\n  \"effortLevel\": \"medium\",\n  \"skipDangerousModePermissionPrompt\": true\n}\n"
     },
     {
       "name": "settings.local.json",
@@ -889,17 +879,10 @@
       "name": "README.md",
       "file": "configs/README.md",
       "meta": {},
-      "content": "# Configs\n\nClaude Code 配置文件，通过 `scripts/sync-configs.sh` 与本地 `~/.claude/` 保持双向同步。\n\n## Sync / 同步机制\n\n本目录中的配置文件是 `~/.claude/` 下实际运行配置的镜像。通过同步脚本和 Dashboard 实现远程管理：\n\n```bash\n# 查看同步状态\nbash scripts/sync-configs.sh status\n\n# 本地改了配置 → 推到仓库\nbash scripts/sync-configs.sh push\n\n# Dashboard 上编辑了 → 拉到本地\ngit pull && bash scripts/sync-configs.sh pull\n```\n\n## Files / 文件说明\n\n### settings.json\n\n全局配置文件，安装位置：`~/.claude/settings.json`\n\n包含以下设置：\n- **model**: 默认使用的模型（当前：`opus[1m]`）\n- **env**: 环境变量（Agent Teams 开关、代理配置）\n- **permissions**: 全局工具权限白名单\n- **hooks**: 事件钩子（Notification、Stop、UserPromptSubmit）\n- **statusLine**: 自定义状态栏命令\n- **enabledPlugins**: 已启用插件列表（19 个）\n- **extraKnownMarketplaces**: 第三方插件源\n- **effortLevel**: 推理强度\n\n### settings.local.json\n\n本地权限覆盖文件，安装位置：`~/.claude/settings.local.json`\n\n包含以下设置：\n- **permissions**: 工具权限预授权列表\n\n### CLAUDE.md\n\n全局用户级指令文件，安装位置：`~/.claude/CLAUDE.md`\n\n所有项目的 Claude Code 会话都会加载此文件中的规则。包含：\n- **Git Commit Rules**: 代码与文档同 commit 等全局约定\n- **Agent Teams Rules**: Team Lead 用 Opus，Teammate 默认 Sonnet\n\n### recommended-plugins.json\n\n推荐的 Claude Code 插件列表。在 Claude Code 中运行 `/plugin` 安装。\n\n| Plugin | Description | Author |\n|--------|-------------|--------|\n| **superpowers** | 核心技能库：TDD、系统化调试、并行 Agent、计划执行等 | Jesse Vincent |\n| **commit-commands** | Git 工作流：/commit、/push、/pr | Anthropic |\n| **code-review** | 自动化代码审查，多 Agent 协作 + 置信度评分 | Anthropic |\n| **feature-dev** | 功能开发工作流：探索 → 架构 → 审查 | Anthropic |\n| **code-simplifier** | 代码简化 Agent，提升可读性 | Anthropic |\n| **security-guidance** | 安全提醒 Hook，警告注入/XSS 等隐患 | Anthropic |\n| **claude-md-management** | CLAUDE.md 维护：审计、学习捕获、记忆更新 | Anthropic |\n| **plugin-dev** | 插件开发工具包 | Anthropic |\n| **github** | GitHub MCP 服务器：Issue、PR、搜索 | GitHub |\n| **pyright-lsp** | Python Pyright LSP 类型检查 | Anthropic |\n\n### telegram.conf.example\n\nTelegram Bot 配置模板，安装位置：`~/.claude/telegram.conf`\n\n## Usage / 使用方式\n\n```bash\n# 推荐：使用 sync-configs.sh 一键同步\nbash scripts/sync-configs.sh pull   # 从仓库安装到本地\nbash scripts/sync-configs.sh push   # 从本地推送到仓库\n\n# 或手动安装\ncp settings.json ~/.claude/settings.json\ncp CLAUDE.md ~/.claude/CLAUDE.md\n\n# 安装推荐插件（在 Claude Code 中逐个运行）\n/plugin install superpowers@claude-plugins-official\n/plugin install commit-commands@claude-plugins-official\n/plugin install code-review@claude-plugins-official\n# ... 完整列表见 recommended-plugins.json\n```\n\n> 注意：`sync-configs.sh pull` 会自动备份原文件到 `~/.claude/backups/`。\n"
+      "content": "# Configs\n\nClaude Code 配置文件，通过 `scripts/sync-configs.sh` 与本地 `~/.claude/` 保持双向同步。\n\n## Sync / 同步机制\n\n本目录中的配置文件是 `~/.claude/` 下实际运行配置的镜像。通过同步脚本和 Dashboard 实现远程管理：\n\n```bash\n# 查看同步状态\nbash scripts/sync-configs.sh status\n\n# 本地改了配置 → 推到仓库\nbash scripts/sync-configs.sh push\n\n# Dashboard 上编辑了 → 拉到本地\ngit pull && bash scripts/sync-configs.sh pull\n```\n\n## Files / 文件说明\n\n### settings.json\n\n全局配置文件，安装位置：`~/.claude/settings.json`\n\n包含以下设置：\n- **model**: 默认使用的模型（当前：`opus[1m]`）\n- **env**: 环境变量（Agent Teams 开关、代理配置）\n- **permissions**: 全局工具权限白名单\n- **hooks**: 事件钩子（Notification、Stop、UserPromptSubmit）\n- **statusLine**: 自定义状态栏命令\n- **enabledPlugins**: 已启用插件列表（19 个）\n- **extraKnownMarketplaces**: 第三方插件源\n- **effortLevel**: 推理强度\n\n### settings.local.json\n\n本地权限覆盖文件，安装位置：`~/.claude/settings.local.json`\n\n包含以下设置：\n- **permissions**: 工具权限预授权列表\n\n### CLAUDE.md\n\n全局用户级指令文件，安装位置：`~/.claude/CLAUDE.md`\n\n所有项目的 Claude Code 会话都会加载此文件中的规则。包含：\n- **Git Commit Rules**: 代码与文档同 commit 等全局约定\n- **Agent Teams Rules**: Team Lead 用 Opus，Teammate 默认 Sonnet\n\n### recommended-plugins.json\n\n推荐的 Claude Code 插件列表。在 Claude Code 中运行 `/plugin` 安装。\n\n| Plugin | Description | Author |\n|--------|-------------|--------|\n| **superpowers** | 核心技能库：TDD、系统化调试、并行 Agent、计划执行等 | Jesse Vincent |\n| **commit-commands** | Git 工作流：/commit、/push、/pr | Anthropic |\n| **code-review** | 自动化代码审查，多 Agent 协作 + 置信度评分 | Anthropic |\n| **feature-dev** | 功能开发工作流：探索 → 架构 → 审查 | Anthropic |\n| **code-simplifier** | 代码简化 Agent，提升可读性 | Anthropic |\n| **security-guidance** | 安全提醒 Hook，警告注入/XSS 等隐患 | Anthropic |\n| **claude-md-management** | CLAUDE.md 维护：审计、学习捕获、记忆更新 | Anthropic |\n| **plugin-dev** | 插件开发工具包 | Anthropic |\n| **github** | GitHub MCP 服务器：Issue、PR、搜索 | GitHub |\n| **pyright-lsp** | Python Pyright LSP 类型检查 | Anthropic |\n\n## Usage / 使用方式\n\n```bash\n# 推荐：使用 sync-configs.sh 一键同步\nbash scripts/sync-configs.sh pull   # 从仓库安装到本地\nbash scripts/sync-configs.sh push   # 从本地推送到仓库\n\n# 或手动安装\ncp settings.json ~/.claude/settings.json\ncp CLAUDE.md ~/.claude/CLAUDE.md\n\n# 安装推荐插件（在 Claude Code 中逐个运行）\n/plugin install superpowers@claude-plugins-official\n/plugin install commit-commands@claude-plugins-official\n/plugin install code-review@claude-plugins-official\n# ... 完整列表见 recommended-plugins.json\n```\n\n> 注意：`sync-configs.sh pull` 会自动备份原文件到 `~/.claude/backups/`。\n"
     }
   ],
   "scripts": [
-    {
-      "name": "notify-telegram.sh",
-      "file": "scripts/notify-telegram.sh",
-      "description": "Claude Code Telegram Notification Script 通过 Telegram Bot API 发送通知到 Telegram 私聊 从 stdin 读取 Claude Code hook JSON 输入，解析工具调用详情",
-      "lines": 344,
-      "deps": ""
-    },
     {
       "name": "statusline.sh",
       "file": "scripts/statusline.sh",
@@ -913,13 +896,6 @@
       "description": "Sync Local Claude Configs with Repository 双向同步 ~/.claude/ 配置文件到仓库 configs/ 目录 用法: bash scripts/sync-configs.sh [push|pull|status]",
       "lines": 384,
       "deps": ""
-    },
-    {
-      "name": "telegram-bridge.sh",
-      "file": "scripts/telegram-bridge.sh",
-      "description": "Telegram -> Claude Code Message Bridge 监听 Telegram 私聊消息，通过 tmux send-keys 注入到 Claude Code 终端 与 notify-telegram.sh（出站通知）形成双向通信",
-      "lines": 641,
-      "deps": "─── 依赖检查 ───"
     }
   ],
   "plugins": [

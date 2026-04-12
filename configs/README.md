@@ -65,10 +65,6 @@ git pull && bash scripts/sync-configs.sh pull
 | **github** | GitHub MCP 服务器：Issue、PR、搜索 | GitHub |
 | **pyright-lsp** | Python Pyright LSP 类型检查 | Anthropic |
 
-### telegram.conf.example
-
-Telegram Bot 配置模板，安装位置：`~/.claude/telegram.conf`
-
 ## Usage / 使用方式
 
 ```bash
