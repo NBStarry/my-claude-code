@@ -103,22 +103,6 @@
       document.getElementById('footer-updated').textContent = 'Last updated: ' + dateStr;
     }
 
-    // Skills sub-nav
-    var subNav = document.getElementById('skills-sub');
-    while (subNav.firstChild) subNav.removeChild(subNav.firstChild);
-    var sources = {};
-    data.skills.forEach(function (s) {
-      var src = s.source || 'unknown';
-      sources[src] = (sources[src] || 0) + 1;
-    });
-    var allItem = el('div', { className: 'nav-sub-item', 'data-filter': 'all' },
-      'All (' + data.skills.length + ')');
-    subNav.appendChild(allItem);
-    Object.keys(sources).sort().forEach(function (src) {
-      var item = el('div', { className: 'nav-sub-item', 'data-filter': src },
-        src + ' (' + sources[src] + ')');
-      subNav.appendChild(item);
-    });
   }
 
   // ===== Breadcrumb =====
@@ -1044,21 +1028,6 @@
     if (navItem) {
       var page = navItem.getAttribute('data-page');
       navigate(page);
-      // Toggle skills sub-nav
-      if (page === 'skills') {
-        var sub = document.getElementById('skills-sub');
-        var chev = document.getElementById('skills-chevron');
-        sub.classList.toggle('open');
-        if (chev) chev.classList.toggle('open');
-      }
-      return;
-    }
-
-    // Sub nav filter items
-    var subItem = e.target.closest('.nav-sub-item[data-filter]');
-    if (subItem) {
-      currentFilter = subItem.getAttribute('data-filter');
-      navigate('skills');
       return;
     }
 
