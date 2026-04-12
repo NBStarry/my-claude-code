@@ -613,8 +613,8 @@ var Editor = (function () {
   function createEditBtn(filePath) {
     var btn = document.createElement('button');
     btn.className = 'btn-edit';
-    btn.textContent = '\u270F\uFE0F';
-    btn.title = 'Edit';
+    btn.textContent = 'Edit';
+    btn.title = 'Edit file';
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
       edit(filePath);
@@ -625,8 +625,8 @@ var Editor = (function () {
   function createDeleteBtn(filePath) {
     var btn = document.createElement('button');
     btn.className = 'btn-delete';
-    btn.textContent = '\uD83D\uDDD1\uFE0F';
-    btn.title = 'Delete';
+    btn.textContent = 'Del';
+    btn.title = 'Delete file';
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
       remove(filePath);
