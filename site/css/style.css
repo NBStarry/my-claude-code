@@ -415,6 +415,7 @@ body {
 .stat-card .stat-value.color-accent { color: var(--accent); }
 .stat-card .stat-value.color-green { color: var(--green); }
 .stat-card .stat-value.color-yellow { color: var(--yellow); }
+.stat-card .stat-value.color-orange { color: var(--orange); }
 .stat-card .stat-value.color-purple { color: var(--purple); }
 
 /* ===== Recent Activity ===== */
@@ -1093,6 +1094,64 @@ body {
 }
 
 /* ===== Scripts ===== */
+/* ===== Commands ===== */
+
+.command-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  transition: border-color 0.15s;
+}
+
+.command-card:hover {
+  border-color: var(--orange);
+}
+
+.cmd-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+}
+
+.cmd-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--orange);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.cmd-lines {
+  font-size: 11px;
+  color: var(--text-faint);
+  background: var(--bg-tertiary);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.cmd-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  padding: 0 20px 12px;
+}
+
+.cmd-content {
+  border-top: 1px solid var(--border-light);
+  padding: 16px 20px;
+}
+
+.cmd-content.collapsed {
+  display: none;
+}
+
+.cmd-content .sd-content {
+  padding: 0;
+}
+
+/* ===== Scripts ===== */
+
 .script-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
