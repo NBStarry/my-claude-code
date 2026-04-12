@@ -191,10 +191,10 @@ body {
 }
 
 .nav-chevron {
-  margin-left: auto;
   font-size: 10px;
   color: var(--text-faint);
   transition: transform 0.2s;
+  margin-left: 4px;
 }
 
 .nav-chevron.open {
