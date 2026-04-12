@@ -25,5 +25,5 @@ secrets.json
 # Node modules
 node_modules/
 
-# Dashboard auto-generated data
-site/data.json
+# Dashboard data is now committed (generated locally with full skill scan)
+# site/data.json

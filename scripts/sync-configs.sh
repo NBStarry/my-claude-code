@@ -237,16 +237,19 @@ do_push() {
     done
   done
 
+  # 生成完整的 Dashboard 数据（包含本地所有 skills）
+  info "Generating Dashboard data (scanning all local skills, plugins, commands)..."
+  bash "${REPO_ROOT}/scripts/generate-site-data.sh"
+  changed=true
+
   if $changed; then
     echo ""
     info "Files updated. Review changes with:"
-    echo "  cd $REPO_ROOT && git diff"
+    echo "  cd $REPO_ROOT && git diff --stat"
     echo ""
     info "To commit and deploy:"
-    echo "  git add configs/ commands/ && git commit -m 'sync: update local Claude configs'"
+    echo "  git add configs/ commands/ site/data.json && git commit -m 'sync: update local Claude configs'"
     echo "  git push"
-  else
-    ok "Nothing to push — all configs already in sync"
   fi
 }
 
